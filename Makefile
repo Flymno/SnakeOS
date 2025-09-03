@@ -29,14 +29,14 @@ LDFLAGS := -ffreestanding -T linker.ld -O2 -nostdlib -lgcc -Isrc/include
 RM := rm -f
 DIR_DUP = mkdir -p $(@D)
 
-all: build/myos.iso
+all: build/SnakeOS.iso
 
-build/myos.iso: myos.bin
+build/SnakeOS.iso: SnakeOS.bin
 	$(DIR_DUP)
-	mv myos.bin build/iso/boot
-	grub-mkrescue -o build/myos.iso build/iso
+	mv SnakeOS.bin build/iso/boot
+	grub-mkrescue -o build/SnakeOS.iso build/iso
 
-myos.bin: $(OBJS)
+SnakeOS.bin: $(OBJS)
 	$(LINKER) $(LDFLAGS) -o $@ $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
@@ -51,7 +51,7 @@ clean:
 	$(RM) -r obj
 
 fclean:
-	$(RM) build/myos.iso
+	$(RM) build/SnakeOS.iso
 
 re:
 	$(MAKE) fclean

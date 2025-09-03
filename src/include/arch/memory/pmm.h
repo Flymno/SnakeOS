@@ -6,6 +6,6 @@
 #include "arch/memory/memoryMap.h"
 
 
-void init_bitmap_allocator(uintptr_t* bitmap_addr);
+void init_bitmap_allocator(uintptr_t bitmap_addr);
 
 #endif
