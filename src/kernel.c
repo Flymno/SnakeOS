@@ -90,15 +90,29 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 	dump_usable_memory();
 	serial_newline();
 
-	serial_writestring("0\n");
-	uintptr_t aloocated_address = palloc(3);
-	serial_writestring("1\n");
+	init_bitmap_allocator((uintptr_t)_end);
+
+	uintptr_t aloocated_address = palloc(300);
 	uint32_t allocated_address_integer = (uint32_t)aloocated_address;
 	serial_newline();
 	serial_writestring("Allocated page start address SCARY TESTING: ");
 	serial_writehex(allocated_address_integer);
+	serial_newline();
 
-	init_bitmap_allocator((uintptr_t)_end);
+	aloocated_address = palloc(5);
+	allocated_address_integer = (uint32_t)aloocated_address;
+	serial_newline();
+	serial_writestring("Allocated page start address SCARY TESTING: ");
+	serial_writehex(allocated_address_integer);
+	serial_newline();
+
+	aloocated_address = palloc(9000);
+	allocated_address_integer = (uint32_t)aloocated_address;
+	serial_newline();
+	serial_writestring("Allocated page start address SCARY TESTING: ");
+	serial_writehex(allocated_address_integer);
+	serial_newline();
+
 
 	for (size_t y = 0; y < multibootInfo.framebuffer_height; y++) {
 		for (size_t x=0; x < multibootInfo.framebuffer_width; x++) {

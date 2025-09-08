@@ -10,10 +10,11 @@
 
 static uint32_t* bitmap;
 static size_t bitmapLength;
+static uintptr_t totalPages;
 
 extern char _scode[], _end[];
 
-int lastAllocatedIndex = 0;
+static uintptr_t lastAllocatedIndex = 0;
 
 struct bitmapLocation
 {
@@ -32,7 +33,7 @@ uintptr_t get_address(uintptr_t pageIndex){
 	struct bitmapLocation location = get_location(pageIndex);
 
 	pageIndex = (location.rowIndex * BITS_PER_ROW) + location.bitIndex;
-	uintptr_t address = (pageIndex * PAGE_SIZE) + (uintptr_t)bitmap;
+	uintptr_t address = (pageIndex * PAGE_SIZE);
 	return address;
 }
 
@@ -83,6 +84,8 @@ void init_bitmap_allocator(uintptr_t bitmap_addr) {
 	bitmap = (uint32_t*)((bitmap_addr + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 	bitmapLength = ((totalMem / PAGE_SIZE) + BITS_PER_ROW - 1) / BITS_PER_ROW;
 
+	totalPages = totalMem / PAGE_SIZE;
+
 	for (size_t i = 0; i < bitmapLength; i++) {
 		bitmap[i] = 0xffffffff;
 	}
@@ -115,9 +118,8 @@ void init_bitmap_allocator(uintptr_t bitmap_addr) {
 
 	uint32_t totalBitmapPages = 0;
 	uintptr_t bitmapStartPage = (uintptr_t)bitmap / PAGE_SIZE;
-	size_t bitmapMemSize = bitmapLength * sizeof(uint32_t);
-	uintptr_t bitmapEndAddr = (uintptr_t)bitmap + bitmapMemSize;
-	uintptr_t bitmapEndPage = ((uintptr_t)bitmapEndAddr + PAGE_SIZE - 1) / PAGE_SIZE;
+	size_t bitmapMemSize = ((bitmapLength * sizeof(uint32_t)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+	uintptr_t bitmapEndPage = (bitmapStartPage + bitmapMemSize / PAGE_SIZE);
 	for (uintptr_t pageIndex = bitmapStartPage; pageIndex < bitmapEndPage; pageIndex ++) {
 		allocate_page(pageIndex);
 		totalBitmapPages++;
@@ -133,28 +135,34 @@ uintptr_t palloc(uint32_t pageCount) {
 	uintptr_t foundIndex = 0;
 	uint32_t currentPagecount = 0;
 
-	serial_writestring("definitionas successful");
+	if (bitmapLength == 0) {
+		serial_writestring("NO MEMORY!! PANIC!!\n");
+	} else {
 
-	for (uintptr_t pageIndex = 0; (pageIndex < bitmapLength) && (found = 0) ; pageIndex = (pageIndex + 1) % bitmapLength) {
-		serial_writestring("loop");
-		if (is_page_allocated(pageIndex) == 0) {
-			found = 1;
-			serial_writestring("found a free page");
-			for (uintptr_t nextIndex = pageIndex + 1; currentPagecount < pageCount; nextIndex = (nextIndex + 1) % bitmapLength){
-				currentPagecount ++;
-				if (is_page_allocated(nextIndex) == 1) {
-					found = 0;
+		for (uintptr_t pageIndex = lastAllocatedIndex; (pageIndex < totalPages) && (found == 0) ; pageIndex = (pageIndex + 1) % totalPages) {
+			if (is_page_allocated(pageIndex) == 0) {
+				found = 1;
+				for (uintptr_t nextIndex = pageIndex + 1; currentPagecount < pageCount; nextIndex = nextIndex + 1){
+					currentPagecount ++;
+					if (is_page_allocated(nextIndex) == 1) {
+						found = 0;
+					}
 				}
+				currentPagecount = 0;
+			}
+			if (found == 1) {
+				foundIndex = pageIndex;
 			}
 		}
-		if (found == 1) {
-			foundIndex = pageIndex;
-		}
 	}
 
-	for (uintptr_t pageIndex = foundIndex; pageIndex < pageIndex + pageCount; pageIndex = (pageIndex + 1) % bitmapLength) {
+
+	uintptr_t endIndex = foundIndex + pageCount;
+	for (uintptr_t pageIndex = foundIndex; pageIndex < endIndex; pageIndex = (pageIndex + 1) % totalPages) {
 		allocate_page(pageIndex);
 	}
+
+	lastAllocatedIndex = foundIndex;
 
 	return get_address(foundIndex);
 }
