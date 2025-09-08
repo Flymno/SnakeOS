@@ -5,7 +5,8 @@
 #include "arch/boot/multiboot2/multiboot2.h"
 #include "arch/memory/memoryMap.h"
 
-
 void init_bitmap_allocator(uintptr_t bitmap_addr);
+
+uintptr_t palloc(uint32_t pageCount);
 
 #endif

@@ -90,6 +90,14 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 	dump_usable_memory();
 	serial_newline();
 
+	serial_writestring("0\n");
+	uintptr_t aloocated_address = palloc(3);
+	serial_writestring("1\n");
+	uint32_t allocated_address_integer = (uint32_t)aloocated_address;
+	serial_newline();
+	serial_writestring("Allocated page start address SCARY TESTING: ");
+	serial_writehex(allocated_address_integer);
+
 	init_bitmap_allocator((uintptr_t)_end);
 
 	for (size_t y = 0; y < multibootInfo.framebuffer_height; y++) {
@@ -105,4 +113,6 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 			*((uint32_t*)(fb + offset)) = color;
 		}
 	}
+
+	
 }
