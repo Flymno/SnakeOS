@@ -92,6 +92,18 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 
 	init_bitmap_allocator((uintptr_t)_end);
 
+	uintptr_t allocatedPage;
+	allocatedPage = palloc(16);
+	if (allocatedPage != UINTPTR_MAX) {
+		serial_writestring("Successfully requested pages. Returned Value: ");
+		serial_writehex(allocatedPage);
+		serial_newline();
+	} else {
+		serial_writestring("Uh oh, something went wrong. Returned Value: ");
+		serial_writehex(allocatedPage);
+		serial_newline();
+	}
+
 	for (size_t y = 0; y < multibootInfo.framebuffer_height; y++) {
 		for (size_t x=0; x < multibootInfo.framebuffer_width; x++) {
 			uint8_t red = (x*255) / multibootInfo.framebuffer_width;

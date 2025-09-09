@@ -30,11 +30,13 @@ struct bitmapLocation get_location(uintptr_t pageIndex) {
 }
 
 uintptr_t get_address(uintptr_t pageIndex){
-	struct bitmapLocation location = get_location(pageIndex);
-
-	pageIndex = (location.rowIndex * BITS_PER_ROW) + location.bitIndex;
 	uintptr_t address = (pageIndex * PAGE_SIZE);
 	return address;
+}
+
+uintptr_t get_index(uintptr_t address){
+	uintptr_t pageIndex = (address / PAGE_SIZE);
+	return pageIndex;
 }
 
 
@@ -57,9 +59,9 @@ uint8_t allocate_page(uintptr_t pageIndex) {
 
 	if (is_page_allocated(pageIndex) == 0) {
 		bitmap[location.rowIndex] |= mask;
-		return 0;		
+		return 1;		
 	} else {
-		return 1;
+		return 0;
 	}
 }
 
@@ -71,9 +73,9 @@ uint8_t free_page(uintptr_t pageIndex) {
 
 	if (is_page_allocated(pageIndex) == 1) {
 		bitmap[location.rowIndex] &= ~mask;
-		return 0;
-	} else {
 		return 1;
+	} else {
+		return 0;
 	}
 }
 
@@ -130,52 +132,69 @@ void init_bitmap_allocator(uintptr_t bitmap_addr) {
 
 }
 
-uintptr_t palloc(uint32_t pageCount) {
-	uint8_t found = 0;
-	uintptr_t foundIndex = 0;
-	uint32_t currentPagecount = 0;
-
-	if (bitmapLength == 0) {
-		serial_writestring("NO MEMORY!! PANIC!!\n");
-	} else {
-
-		for (uintptr_t pageIndex = lastAllocatedIndex; (pageIndex < totalPages) && (found == 0) ; pageIndex = (pageIndex + 1) % totalPages) {
-			if (is_page_allocated(pageIndex) == 0) {
-				found = 1;
-				for (uintptr_t nextIndex = pageIndex + 1; currentPagecount < pageCount; nextIndex = nextIndex + 1){
-					currentPagecount ++;
-					if (is_page_allocated(nextIndex) == 1) {
-						found = 0;
-					}
-				}
-				currentPagecount = 0;
-			}
-			if (found == 1) {
-				foundIndex = pageIndex;
-			}
+int find_consecutive_free_pages(uintptr_t start, uintptr_t end, uint32_t pageCount, uintptr_t* outIndex) {
+	for (uintptr_t pageIndex = start; pageIndex < end; pageIndex++) {
+		if (is_page_allocated(pageIndex)) {
+			continue;
+		}
+		uint8_t found = 1;
+		for (uintptr_t offset = 0; offset < pageCount; offset++) {
+            if (is_page_allocated(pageIndex + offset)) {
+                found = 0;
+                break;
+            }
+        }
+		if (found) {
+			*outIndex = pageIndex;
+			return 1;
 		}
 	}
-
-
-	uintptr_t endIndex = foundIndex + pageCount;
-	for (uintptr_t pageIndex = foundIndex; pageIndex < endIndex; pageIndex = (pageIndex + 1) % totalPages) {
-		allocate_page(pageIndex);
-	}
-
-	lastAllocatedIndex = foundIndex;
-
-	return get_address(foundIndex);
+	return 0;
 }
 
-uintptr_t palloc(uint32_t length) {
-	uint8_t found = 0;
+uintptr_t palloc(uint32_t pageCount) {
+	uint8_t success = 0;
 	uintptr_t foundIndex = 0;
-	uint32_t currentPagecount = 0;
 
 	if (bitmapLength == 0) {
 		serial_writestring("NO MEMORY!! PANIC!!\n");
 	} else {
-		for (uintptr_t pageIndex = lastAllocatedIndex; (pageIndex < totalPages) && (found == 0); pageIndex++) {
-
+		/* Pass one */
+		success = find_consecutive_free_pages(lastAllocatedIndex, totalPages, pageCount, &foundIndex);
+		/* Pass two */
+		if (!success) {
+			success = find_consecutive_free_pages(0, lastAllocatedIndex, pageCount, &foundIndex);
 		}
 	}
+
+	if (success) {
+		uintptr_t endIndex = foundIndex + pageCount;
+		for (uintptr_t pageIndex = foundIndex; pageIndex < endIndex; pageIndex++) {
+			allocate_page(pageIndex);
+		}
+
+		lastAllocatedIndex = foundIndex;
+
+		return get_address(foundIndex);
+	} else {
+		return UINTPTR_MAX;
+	}
+}
+
+uint8_t pfree(uintptr_t address, uint32_t pageCount) {
+	uintptr_t startIndex = get_index(address);
+	uintptr_t endIndex = startIndex + pageCount;
+
+	uint8_t success = 1;
+
+	if (endIndex > totalPages) {
+		endIndex = totalPages;
+	}
+
+	for (uintptr_t pageIndex = startIndex; pageIndex < endIndex; pageIndex++) {
+		if (!free_page(pageIndex)) {
+			success = 0;
+		} 
+	}
+	return success;
+}
