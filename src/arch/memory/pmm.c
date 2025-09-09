@@ -166,3 +166,16 @@ uintptr_t palloc(uint32_t pageCount) {
 
 	return get_address(foundIndex);
 }
+
+uintptr_t palloc(uint32_t length) {
+	uint8_t found = 0;
+	uintptr_t foundIndex = 0;
+	uint32_t currentPagecount = 0;
+
+	if (bitmapLength == 0) {
+		serial_writestring("NO MEMORY!! PANIC!!\n");
+	} else {
+		for (uintptr_t pageIndex = lastAllocatedIndex; (pageIndex < totalPages) && (found == 0); pageIndex++) {
+
+		}
+	}
