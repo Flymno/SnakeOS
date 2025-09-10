@@ -79,7 +79,6 @@ uint8_t free_page(uintptr_t pageIndex) {
 	}
 }
 
-
 void init_bitmap_allocator(uintptr_t bitmap_addr) {
 	uint64_t totalMem = memoryMap[memoryMap_Size - 1].addr + memoryMap[memoryMap_Size - 1].len;
 

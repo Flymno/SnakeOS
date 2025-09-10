@@ -104,6 +104,48 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 		serial_newline();
 	}
 
+	if (pfree(allocatedPage, 16)) {
+		serial_writestring("Successfully freed pages \n");
+	} else {
+		serial_writestring("Uh oh, something went wrong. Failed to free pages \n");
+	}
+
+	allocatedPage = palloc(16);
+	if (allocatedPage != UINTPTR_MAX) {
+		serial_writestring("Successfully requested pages. Returned Value: ");
+		serial_writehex(allocatedPage);
+		serial_newline();
+	} else {
+		serial_writestring("Uh oh, something went wrong. Returned Value: ");
+		serial_writehex(allocatedPage);
+		serial_newline();
+	}
+
+	uintptr_t allocatedPage2;
+	allocatedPage2 = palloc(16);
+	if (allocatedPage2 != UINTPTR_MAX) {
+		serial_writestring("Successfully requested pages. Returned Value: ");
+		serial_writehex(allocatedPage2);
+		serial_newline();
+	} else {
+		serial_writestring("Uh oh, something went wrong. Returned Value: ");
+		serial_writehex(allocatedPage2);
+		serial_newline();
+	}
+
+
+	uintptr_t allocatedPage3;
+	allocatedPage3 = palloc(500);
+	if (allocatedPage3 != UINTPTR_MAX) {
+		serial_writestring("Successfully requested pages. Returned Value: ");
+		serial_writehex(allocatedPage3);
+		serial_newline();
+	} else {
+		serial_writestring("Uh oh, something went wrong. Returned Value: ");
+		serial_writehex(allocatedPage3);
+		serial_newline();
+	}
+
 	for (size_t y = 0; y < multibootInfo.framebuffer_height; y++) {
 		for (size_t x=0; x < multibootInfo.framebuffer_width; x++) {
 			uint8_t red = (x*255) / multibootInfo.framebuffer_width;

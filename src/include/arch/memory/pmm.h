@@ -9,4 +9,6 @@ void init_bitmap_allocator(uintptr_t bitmap_addr);
 
 uintptr_t palloc(uint32_t pageCount);
 
+uint8_t pfree(uintptr_t address, uint32_t pageCount);
+
 #endif
