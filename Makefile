@@ -14,6 +14,7 @@ SRCS := \
 	arch/boot/multiboot2/multiboot2.c \
 	arch/memory/pmm.c \
 	arch/memory/memoryMap.c \
+	arch/graphics/framebuffer.c \
 	lib/string.c \
 	drivers/serial/serial.c 
 SRCS := $(SRCS:%=$(SRC_DIR)/%)

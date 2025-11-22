@@ -7,6 +7,7 @@
 #include "arch/memory/pmm.h"
 #include "arch/memory/memoryMap.h"
 #include "arch/gdt/gdtInit.h"
+#include "arch/graphics/framebuffer.h"
 
 #define MAX_MEMMAP_ENTRIES 64
 
@@ -61,26 +62,26 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 	serial_writestring("FRAMEBUFFER:\n");
 
 	serial_writestring("Framebuffer address: ");
-	serial_writehex((uint32_t)multibootInfo.framebuffer_addr);
+	serial_writehex((uint32_t)framebuffer.addr);
 	serial_newline();
 	serial_writestring("Framebuffer pitch: ");
-	serial_writehex(multibootInfo.framebuffer_pitch);
+	serial_writehex(framebuffer.pitch);
 	serial_newline();
 	serial_writestring("Framebuffer width: ");
-	serial_writehex(multibootInfo.framebuffer_width);
+	serial_writehex(framebuffer.width);
 	serial_newline();
 	serial_writestring("Framebuffer height: ");
-	serial_writehex(multibootInfo.framebuffer_height);
+	serial_writehex(framebuffer.height);
 	serial_newline();
 	serial_writestring("Framebuffer bpp: ");
-	serial_writehex(multibootInfo.framebuffer_bpp);
+	serial_writehex(framebuffer.bpp);
 	serial_newline();
 	serial_writestring("Framebuffer type: ");
-	serial_writehex(multibootInfo.framebuffer_type);
+	serial_writehex(framebuffer.type);
 	serial_newline();
 	serial_newline();
 	
-	if ((uint32_t)multibootInfo.framebuffer_addr > 0xffffffff) {
+	if ((uint32_t)framebuffer.addr > 0xffffffff) {
 		reboot();
 	}
 
@@ -146,15 +147,15 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 		serial_newline();
 	}
 
-	for (size_t y = 0; y < multibootInfo.framebuffer_height; y++) {
-		for (size_t x=0; x < multibootInfo.framebuffer_width; x++) {
-			uint8_t red = (x*255) / multibootInfo.framebuffer_width;
-			uint8_t green = (y*255) / multibootInfo.framebuffer_height;
-			uint8_t blue = ((multibootInfo.framebuffer_height - y) * 255) / multibootInfo.framebuffer_height;
-			uint32_t color = (red << multibootInfo.framebuffer_red_field_position) | (green << multibootInfo.framebuffer_green_field_position) | (blue << multibootInfo.framebuffer_blue_field_position);
+	for (size_t y = 0; y < framebuffer.height; y++) {
+		for (size_t x=0; x < framebuffer.width; x++) {
+			uint8_t red = (x*255) / framebuffer.width;
+			uint8_t green = (y*255) / framebuffer.height;
+			uint8_t blue = ((framebuffer.height - y) * 255) / framebuffer.height;
+			uint32_t color = (red << framebuffer.red_pos) | (green << framebuffer.green_pos) | (blue << framebuffer.blue_pos);
 
-			size_t offset = y * multibootInfo.framebuffer_pitch + x * multibootInfo.framebuffer_bpp / 8;
-			uint8_t* fb = (uint8_t*)multibootInfo.framebuffer_addr;
+			size_t offset = y * framebuffer.pitch + x * framebuffer.bpp / 8;
+			uint8_t* fb = (uint8_t*)framebuffer.addr;
 			
 			*((uint32_t*)(fb + offset)) = color;
 		}

@@ -2,13 +2,12 @@
 #include "arch/boot/multiboot2/multiboot2.h"
 #include "drivers/serial/serial.h"
 #include "arch/memory/memoryMap.h"
+#include "arch/graphics/framebuffer.h"
 
 #define MULTIBOOT_TAG_TYPE_END 0
 #define MULTIBOOT_TAG_FRAMEBUFFER 8
 #define MULTIBOOT_TAG_MMAP 6
 #define MULTIBOOT2_MAGIC 0x36d76289
-
-multiboot2Info multibootInfo = {0};
 
 struct multiboot2_tag
 {
@@ -26,9 +25,6 @@ struct multiboot2_tag_framebuffer
   uint32_t framebuffer_width;
   uint32_t framebuffer_height;
   uint8_t framebuffer_bpp;
-#define MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED 0
-#define MULTIBOOT_FRAMEBUFFER_TYPE_RGB     1
-#define MULTIBOOT_FRAMEBUFFER_TYPE_EGA_TEXT     2
   uint8_t framebuffer_type;
   uint16_t reserved;
   struct 
@@ -64,17 +60,24 @@ void multiboot2_mmap(struct multiboot2_tag *memory_map_tag) {
 	}
 }
 
-void multiboot2_framebuffer(struct multiboot2_tag *frame_buffer_tag) {
-	multibootInfo.framebuffer_addr = (uintptr_t) ((struct multiboot2_tag_framebuffer *) frame_buffer_tag)->framebuffer_addr;
-	multibootInfo.framebuffer_pitch = ((struct multiboot2_tag_framebuffer *) frame_buffer_tag)->framebuffer_pitch;
-	multibootInfo.framebuffer_width = ((struct multiboot2_tag_framebuffer *) frame_buffer_tag)->framebuffer_width;
-	multibootInfo.framebuffer_height = ((struct multiboot2_tag_framebuffer *) frame_buffer_tag)->framebuffer_height;
-	multibootInfo.framebuffer_bpp = ((struct multiboot2_tag_framebuffer *) frame_buffer_tag)->framebuffer_bpp;
-	multibootInfo.framebuffer_type = ((struct multiboot2_tag_framebuffer *) frame_buffer_tag)->framebuffer_type;
-	if (multibootInfo.framebuffer_type == 1) {
-		multibootInfo.framebuffer_red_field_position = ((struct multiboot2_tag_framebuffer *) frame_buffer_tag)->framebuffer_red_field_position;
-		multibootInfo.framebuffer_green_field_position = ((struct multiboot2_tag_framebuffer *) frame_buffer_tag)->framebuffer_green_field_position;
-		multibootInfo.framebuffer_blue_field_position = ((struct multiboot2_tag_framebuffer *) frame_buffer_tag)->framebuffer_blue_field_position;
+void multiboot2_framebuffer(struct multiboot2_tag *tag) {
+	struct multiboot2_tag_framebuffer* frame_buffer_tag = (struct multiboot2_tag_framebuffer*) tag;
+	
+	framebuffer.addr = frame_buffer_tag->framebuffer_addr;
+	framebuffer.pitch = frame_buffer_tag->framebuffer_pitch;
+	framebuffer.width = frame_buffer_tag->framebuffer_width;
+	framebuffer.height = frame_buffer_tag->framebuffer_height;
+	framebuffer.bpp = frame_buffer_tag->framebuffer_bpp;
+	framebuffer.type = frame_buffer_tag->framebuffer_type;
+
+	if (framebuffer.type == MULTIBOOT_FRAMEBUFFER_TYPE_RGB) {
+		framebuffer.red_pos = frame_buffer_tag->framebuffer_red_field_position;
+		framebuffer.green_pos = frame_buffer_tag->framebuffer_green_field_position;
+		framebuffer.blue_pos = frame_buffer_tag->framebuffer_blue_field_position;
+	} else {
+		framebuffer.red_pos = -1;
+		framebuffer.green_pos = -1;
+		framebuffer.blue_pos = -1;
 	}
 }
 
