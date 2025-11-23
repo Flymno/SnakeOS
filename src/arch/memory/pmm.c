@@ -99,22 +99,7 @@ void init_bitmap_allocator(uintptr_t bitmap_addr) {
 		bitmap[i] = 0xffffffff;
 	}
 
-
 	memorymap_foreach_usable(free_region_callback);
-
-	// uint32_t totalUsablePages = 0;
-	// for (size_t i = 0; i < usableMemoryMap_Size; i++) {
-	// 	uintptr_t startPage = usableMemoryMap[i].base / PAGE_SIZE;
-	// 	size_t pageCount = usableMemoryMap[i].len / PAGE_SIZE;
-	// 	uintptr_t endPage = startPage + pageCount;
-	// 	for (uintptr_t pageIndex = startPage; pageIndex < endPage; pageIndex ++) {
-	// 		free_page(pageIndex);
-	// 		totalUsablePages++;
-	// 	}
-	// }
-	// serial_writestring("Freed ");
-	// serial_writedec(totalUsablePages);
-	// serial_writestring(" usable pages\n");
 
 	uint32_t totalKernelPages = 0;
 	uintptr_t kernelStartPage = (uintptr_t)_scode / PAGE_SIZE;

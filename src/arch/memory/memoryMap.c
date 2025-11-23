@@ -36,11 +36,6 @@ void memoryMap_multiboot2_init(const void* tag) {
 		return;
 	}
 
-	// const memoryRegion *mmapEntry;
-	// for (mmapEntry = ((struct multiboot2_tag_mmap *) mmap_tag)->entries; (uint8_t *) mmapEntry < (uint8_t * ) mmap_tag + mmap_tag->size; mmapEntry = (memoryRegion *)((uintptr_t) mmapEntry + ((struct multiboot2_tag_mmap *) mmap_tag)->entry_size)) {
-	// 	add_mmap_entry(mmapEntry);
-	// }
-
 	size_t entryCount = (mmap_tag->size - sizeof(*mmap_tag)) / mmap_tag->entry_size;
 	const rawMemoryRegion* entry = mmap_tag->entries;
 
@@ -56,11 +51,6 @@ void memoryMap_multiboot2_init(const void* tag) {
 
 	filter_usable_memory();
 }
-
-// void add_mmap_entry(memoryRegion *mmapEntry) {
-// 	memoryMap[memoryMap_Size] = *mmapEntry;
-// 	memoryMap_Size++;
-// }
 
 void filter_usable_memory() {
 	for (size_t i = 0; i < memoryMap_Size; i++) {
