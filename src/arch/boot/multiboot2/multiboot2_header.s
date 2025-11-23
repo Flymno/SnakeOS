@@ -10,12 +10,14 @@ multiboot_header_start:
 	/* framebuffer */ 
 	.word 5
 	.word 0
-	.long 20
+	.long 24
 	.long 1920
 	.long 1080
 	.long 32
+	.long 0
 	
 	/* ending tag */
+	.word 0
 	.word 0
 	.long 8
 multiboot_header_end:

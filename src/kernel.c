@@ -32,7 +32,7 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 	multiboot2_register_callback(framebuffer_multiboot2_init);
 	multiboot2_register_callback(memoryMap_multiboot2_init);
 
-	serial_writestring("Welcome to MyOs!\n");
+	serial_writestring("Welcome to SnakeOS!\n");
 	serial_writestring("----------------------------------------\n\n");
 
 	serial_writestring("Kernel base address: ");
@@ -154,7 +154,7 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 			uint32_t color = (red << framebuffer.red_pos) | (green << framebuffer.green_pos) | (blue << framebuffer.blue_pos);
 
 			size_t offset = y * framebuffer.pitch + x * framebuffer.bpp / 8;
-			uint8_t* fb = (uint8_t*)framebuffer.addr;
+			uint8_t* fb = (uint8_t*)(uintptr_t)framebuffer.addr;
 			
 			*((uint32_t*)(fb + offset)) = color;
 		}

@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include "arch/graphics/framebuffer.h"
 #include "arch/boot/multiboot2/multiboot2_consts.h"
+#include "drivers/serial/serial.h"
 
 framebuffer_t framebuffer = {0};
 
@@ -32,8 +33,19 @@ void framebuffer_multiboot2_init(const void* tag) {
 	const struct multiboot2_tag_framebuffer* framebuffer_tag = tag;
 
 	if (framebuffer_tag->type != TAG_FRAMEBUFFER) {
+		serial_writestring("Not a framebuffer tag! Tag: ");
+		serial_writehex(framebuffer_tag->type);
+		serial_newline();
 		return;
 	}
+
+	serial_writestring("Framebuffer tag found!\n");
+	serial_writestring("	Type: ");
+	serial_writehex(framebuffer_tag->type);
+	serial_newline();
+	serial_writestring("	Size: ");
+	serial_writehex(framebuffer_tag->size);
+	serial_newline();
 
 	framebuffer.addr = framebuffer_tag->framebuffer_addr;
 	framebuffer.pitch = framebuffer_tag->framebuffer_pitch;

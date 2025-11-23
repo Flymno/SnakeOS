@@ -32,12 +32,12 @@ DIR_DUP = mkdir -p $(@D)
 
 all: build/SnakeOS.iso
 
-build/SnakeOS.iso: SnakeOS.bin
+build/SnakeOS.iso: SnakeOS.elf
 	$(DIR_DUP)
-	mv SnakeOS.bin build/iso/boot
+	mv SnakeOS.elf build/iso/boot
 	grub-mkrescue -o build/SnakeOS.iso build/iso
 
-SnakeOS.bin: $(OBJS)
+SnakeOS.elf: $(OBJS)
 	$(LINKER) $(LDFLAGS) -o $@ $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c

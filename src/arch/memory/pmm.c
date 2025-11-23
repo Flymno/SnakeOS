@@ -79,7 +79,7 @@ uint8_t free_page(uintptr_t pageIndex) {
 	}
 }
 
-static void free_region_callback(memoryRegion_t* region) {
+static void free_region_callback(const memoryRegion_t* region) {
 	uintptr_t startPage = region->base / PAGE_SIZE;
 	uintptr_t pageCount = region->len / PAGE_SIZE;
 	for (uintptr_t pageIndex = startPage; pageIndex < startPage + pageCount; pageIndex++) {
@@ -123,7 +123,6 @@ void init_bitmap_allocator(uintptr_t bitmap_addr) {
 	serial_writestring("Reserved ");
 	serial_writedec(totalBitmapPages);
 	serial_writestring(" bitmap pages\n");
-
 }
 
 int find_consecutive_free_pages(uintptr_t start, uintptr_t end, uint32_t pageCount, uintptr_t* outIndex) {

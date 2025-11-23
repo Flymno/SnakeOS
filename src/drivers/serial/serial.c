@@ -43,14 +43,36 @@ void serial_writehex(uint32_t val) {
     serial_writestring(buf);
 }
 
+// void serial_writedec(uint32_t val) {
+//     char buf[12];
+//     for (int i = 0; i < 12; i++) {
+//         char digit;
+//         digit = val % 10;
+//         digit += '0';
+//         buf[12 - i] = digit;
+//         val /= 10;
+//     }
+//     serial_writestring(buf);
+// }
+
 void serial_writedec(uint32_t val) {
-    char buf[12];
-    for (int i = 0; i < 12; i++) {
-        char digit;
-        digit = val % 10;
-        digit += '0';
-        buf[12 - i] = digit;
-        val /= 10;
+    char buf[12];  // Enough for 10 digits + null + optional
+    int pos = 0;
+
+    if (val == 0) {
+        buf[pos++] = '0';
+    } else {
+        char tmp[10]; // max 10 digits for uint32_t
+        int tmp_pos = 0;
+        while (val > 0) {
+            tmp[tmp_pos++] = '0' + (val % 10);
+            val /= 10;
+        }
+        // reverse digits into buf
+        for (int i = tmp_pos - 1; i >= 0; i--) {
+            buf[pos++] = tmp[i];
+        }
     }
+    buf[pos] = '\0';
     serial_writestring(buf);
 }

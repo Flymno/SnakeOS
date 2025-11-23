@@ -28,7 +28,7 @@ void multiboot2_register_callback(multiboot2_tag_callback_t cb) {
 void multiboot2_parse(uint32_t multiboot2_info_addr)  {
 	multiboot2_tag_t *tag;
 	
-	for (tag = (struct multiboot2_tag *) (multiboot2_info_addr + 8); tag->type != TAG_END; tag = (struct multiboot2_tag *) ((uint8_t *) tag + ((tag->size + 7) & ~7))) {
+	for (tag = (multiboot2_tag_t *) (multiboot2_info_addr + 8); tag->type != TAG_END; tag = (multiboot2_tag_t *) ((uint8_t *) tag + ((tag->size + 7) & ~7))) {
 		for (size_t i = 0; i < callback_count; i++) {
 			callbacks[i](tag);
 		}

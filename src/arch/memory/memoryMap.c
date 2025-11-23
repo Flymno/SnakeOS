@@ -29,29 +29,6 @@ size_t memoryMap_Size = 0;
 memoryRegion_t usableMemoryMap[MAX_MEMMAP_ENTRIES];
 size_t usableMemoryMap_Size = 0;
 
-void memoryMap_multiboot2_init(const void* tag) {
-	const struct multiboot2_tag_mmap* mmap_tag = tag;
-
-	if(mmap_tag->type != TAG_MMAP) {
-		return;
-	}
-
-	size_t entryCount = (mmap_tag->size - sizeof(*mmap_tag)) / mmap_tag->entry_size;
-	const rawMemoryRegion* entry = mmap_tag->entries;
-
-	for (size_t i = 0; i < entryCount; i++) {
-		if (memoryMap_Size < MAX_MEMMAP_ENTRIES) {
-			memoryMap[memoryMap_Size].base = entry->addr;
-			memoryMap[memoryMap_Size].len = entry->len;
-			memoryMap[memoryMap_Size].regionType = entry->type;
-		}
-
-    	entry = (const rawMemoryRegion*)((uintptr_t)entry + mmap_tag->entry_size);
-	}
-
-	filter_usable_memory();
-}
-
 void filter_usable_memory() {
 	for (size_t i = 0; i < memoryMap_Size; i++) {
 		if (memoryMap[i].regionType == MEMORY_AVAILABLE) {
@@ -60,6 +37,43 @@ void filter_usable_memory() {
 			usableMemoryMap_Size++;
 		}
 	}
+}
+
+void memoryMap_multiboot2_init(const void* tag) {
+	const struct multiboot2_tag_mmap* mmap_tag = tag;
+
+	if(mmap_tag->type != TAG_MMAP) {
+		serial_writestring("Not a memory map tag! Tag: ");
+		serial_writehex(mmap_tag->type);
+		serial_newline();
+		return;
+	}
+
+	serial_writestring("Memory map tag found!\n");
+	serial_writestring("	Type: ");
+	serial_writehex(mmap_tag->type);
+	serial_newline();
+	serial_writestring("	Size: ");
+	serial_writehex(mmap_tag->size);
+	serial_newline();
+
+	const uint8_t* end = (const uint8_t*)mmap_tag + mmap_tag->size;
+	const uint8_t* entry_ptr = (const uint8_t*)mmap_tag->entries;
+
+	while (entry_ptr < end) {
+		const rawMemoryRegion* entry = (const rawMemoryRegion*)entry_ptr;
+
+		if (memoryMap_Size < MAX_MEMMAP_ENTRIES) {
+			memoryMap[memoryMap_Size].base = entry->addr;
+			memoryMap[memoryMap_Size].len = entry->len;
+			memoryMap[memoryMap_Size].regionType = entry->type;
+			memoryMap_Size++;
+		}
+
+		entry_ptr += mmap_tag->entry_size;
+	}
+
+	filter_usable_memory();
 }
 
 void memorymap_foreach_raw(memoryMap_region_callback_t callback) {
