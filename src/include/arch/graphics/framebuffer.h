@@ -19,4 +19,6 @@ typedef struct framebuffer {
 
 extern framebuffer_t framebuffer;
 
+void framebuffer_multiboot2_init(const void* tag);
+
 #endif

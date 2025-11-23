@@ -26,11 +26,11 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 {
 	size_t kernelSize =  (size_t)_end - (size_t)_scode;
 
-	/* init_pics(0x20, 0x28); */
-
 	init_gdt();
-
 	init_serial();
+
+	multiboot2_register_callback(framebuffer_multiboot2_init);
+	multiboot2_register_callback(memoryMap_multiboot2_init);
 
 	serial_writestring("Welcome to MyOs!\n");
 	serial_writestring("----------------------------------------\n\n");
@@ -52,7 +52,7 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 
 	if (verify_multiboot(multiboot2_magic) == 0) {
 		serial_writestring("Multiboot 2 successfull\n");
-		multiboot2_init(multiboot2_info_addr);
+		multiboot2_parse(multiboot2_info_addr);
 	} else {
 		serial_writestring("Multiboot 2 failed\n");
 		return;
@@ -85,7 +85,6 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 		reboot();
 	}
 
-	filter_usable_memory();
 	dump_memMap();
 	serial_newline();
 	dump_usable_memory();

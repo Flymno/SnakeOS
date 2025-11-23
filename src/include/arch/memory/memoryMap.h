@@ -3,40 +3,32 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "arch/boot/multiboot2/multiboot2_consts.h"
 
 #define MAX_MEMMAP_ENTRIES 64
 
-typedef struct 
-{
-  uint64_t addr;
-  uint64_t len;
-#define MULTIBOOT_MEMORY_AVAILABLE              1
-#define MULTIBOOT_MEMORY_RESERVED               2
-#define MULTIBOOT_MEMORY_ACPI_RECLAIMABLE       3
-#define MULTIBOOT_MEMORY_NVS                    4
-#define MULTIBOOT_MEMORY_BADRAM                 5
-  uint32_t type;
-  uint32_t zero;
-} memoryRegion;
+typedef enum {
+  RESERVED = 0,
+  USABLE
+} isUseable;
 
 typedef struct
 {
 	uint64_t base;
 	uint64_t len;
-} usableMemoryRegion;
+  uint8_t regionType;
+} memoryRegion_t;
 
-void add_mmap_entry(memoryRegion *mmapEntry);
+void memoryMap_multiboot2_init(const void* tag);
 
-void filter_usable_memory();
+typedef void (*memoryMap_region_callback_t)(const memoryRegion_t *region);
 
-void dump_memMap();
+void memorymap_foreach_raw(memoryMap_region_callback_t callback);
+void memorymap_foreach_usable(memoryMap_region_callback_t callback);
 
-void dump_usable_memory();
+uintptr_t memorymap_get_highest_address(void);
 
-extern memoryRegion memoryMap[MAX_MEMMAP_ENTRIES];
-extern size_t memoryMap_Size;
-
-extern usableMemoryRegion usableMemoryMap[MAX_MEMMAP_ENTRIES];
-extern size_t usableMemoryMap_Size;
+void dump_memMap(void);
+void dump_usable_memory(void);
 
 #endif
