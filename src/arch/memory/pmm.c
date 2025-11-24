@@ -39,8 +39,6 @@ uintptr_t get_index(uintptr_t address){
 	return pageIndex;
 }
 
-
-
 uint8_t is_page_allocated(uintptr_t pageIndex) {
 	struct bitmapLocation location = get_location(pageIndex);
 	uint32_t mask = (uint32_t) 1 << location.bitIndex;
@@ -64,7 +62,6 @@ uint8_t allocate_page(uintptr_t pageIndex) {
 		return 0;
 	}
 }
-
 
 uint8_t free_page(uintptr_t pageIndex) {
 	struct bitmapLocation location = get_location(pageIndex);
@@ -90,10 +87,9 @@ static void free_region_callback(const memoryRegion_t* region) {
 void init_bitmap_allocator(uintptr_t bitmap_addr) {
 	uint64_t totalMem = (uint64_t)memorymap_get_highest_address();
 
-	bitmap = (uint32_t*)((bitmap_addr + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
-	bitmapLength = ((totalMem / PAGE_SIZE) + BITS_PER_ROW - 1) / BITS_PER_ROW;
-
+	bitmap = (uint32_t*)((bitmap_addr + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)); //aligns bitmap to page boundary at bitmap_addr
 	totalPages = totalMem / PAGE_SIZE;
+	bitmapLength = ((totalPages + BITS_PER_ROW - 1) / BITS_PER_ROW); //calculates number of uint32_t required to map all pages
 
 	for (size_t i = 0; i < bitmapLength; i++) {
 		bitmap[i] = 0xffffffff;
@@ -101,6 +97,7 @@ void init_bitmap_allocator(uintptr_t bitmap_addr) {
 
 	memorymap_foreach_usable(free_region_callback);
 
+	//allocate kernel pages
 	uint32_t totalKernelPages = 0;
 	uintptr_t kernelStartPage = (uintptr_t)_scode / PAGE_SIZE;
 	uintptr_t kernelEndPage = ((uintptr_t)_end + PAGE_SIZE - 1) / PAGE_SIZE;
@@ -112,6 +109,7 @@ void init_bitmap_allocator(uintptr_t bitmap_addr) {
 	serial_writedec(totalKernelPages);
 	serial_writestring(" kernel pages\n");
 
+	//the bitmap itself needs allocated RAM
 	uint32_t totalBitmapPages = 0;
 	uintptr_t bitmapStartPage = (uintptr_t)bitmap / PAGE_SIZE;
 	size_t bitmapMemSize = ((bitmapLength * sizeof(uint32_t)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
@@ -145,7 +143,7 @@ int find_consecutive_free_pages(uintptr_t start, uintptr_t end, uint32_t pageCou
 	return 0;
 }
 
-uintptr_t palloc(uint32_t pageCount) {
+uintptr_t palloc(uint32_t pageCount) { //attempts to allocate pageCount pages, returns UINTPTR_MAX on failure
 	uint8_t success = 0;
 	uintptr_t foundIndex = 0;
 
@@ -174,7 +172,7 @@ uintptr_t palloc(uint32_t pageCount) {
 	}
 }
 
-uint8_t pfree(uintptr_t address, uint32_t pageCount) {
+uint8_t pfree(uintptr_t address, uint32_t pageCount) { //attempts to free pageCount pages at address, returns 0 on success
 	uintptr_t startIndex = get_index(address);
 	uintptr_t endIndex = startIndex + pageCount;
 

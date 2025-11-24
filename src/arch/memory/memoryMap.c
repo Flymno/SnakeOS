@@ -32,8 +32,7 @@ size_t usableMemoryMap_Size = 0;
 void filter_usable_memory() {
 	for (size_t i = 0; i < memoryMap_Size; i++) {
 		if (memoryMap[i].regionType == MEMORY_AVAILABLE) {
-			usableMemoryMap[usableMemoryMap_Size].base = memoryMap[i].base;
-			usableMemoryMap[usableMemoryMap_Size].len = memoryMap[i].len;
+			usableMemoryMap[usableMemoryMap_Size] = memoryMap[i];
 			usableMemoryMap_Size++;
 		}
 	}
@@ -88,12 +87,12 @@ void memorymap_foreach_usable(memoryMap_region_callback_t callback) {
 	}
 }
 
-uintptr_t memorymap_get_highest_address(void) {
+uint64_t memorymap_get_highest_address(void) {
 	if (memoryMap_Size == 0) return 0;
 
-	uintptr_t highest = memoryMap[0].base + memoryMap[0].len;
+	uint64_t highest = memoryMap[0].base + memoryMap[0].len;
 	for (size_t i = 1; i < memoryMap_Size; i++) {
-		uintptr_t end = memoryMap[i].base + memoryMap[i].len;
+		uint64_t end = memoryMap[i].base + memoryMap[i].len;
 		if (end > highest) highest = end;
 	}
 	return highest;
