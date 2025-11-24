@@ -1,5 +1,28 @@
 #include <stddef.h>
+#include <stdint.h>
 #include "lib/string.h"
+
+void * memcpy(void *dest, const void *src, size_t n) {
+	const unsigned char *csrc = (const unsigned char *)src;
+	unsigned char *cdest = (unsigned char *)dest;
+
+	for (size_t i = 0; i < n; i++) {
+		cdest[i] = csrc[i];
+	}
+
+	return dest;
+}
+
+void * memset(void *dest, uint8_t value, size_t n) {
+	unsigned char *cdest = (unsigned char *)dest;
+	unsigned char cvalue = (unsigned char)value;
+
+	for (size_t i = 0; i < n; i++) {
+		cdest[i] = cvalue;
+	}
+
+	return dest;
+}
 
 size_t strlen(const char* str) 
 {
