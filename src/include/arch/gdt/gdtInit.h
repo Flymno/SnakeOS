@@ -1,6 +1,10 @@
 #ifndef GDTINIT_H_
 #define GDTINIT_H_
 
-void init_gdt();
+/* ---------------- Public API Prototypes ---------------- 
+* void gdt_init(void)
+*	-Initialises the GDT. Calls gdtReload.s
+*/
+void gdt_init();
 
 #endif

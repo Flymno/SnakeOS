@@ -1,28 +1,38 @@
+/* ---------------- Includes ---------------- */
 #include <stdint.h>
 
+/* ---------------- Extern Symbols ---------------- */
 extern void reload_segment_registers(void);
 
-struct GDT_entry {
+/* ---------------- Internal Types ---------------- */
+typedef struct {
 	uint32_t base;
 	uint32_t limit;
 	uint8_t access;
 	uint8_t flags;
-};
+} GDTEntry_t;
 
-typedef struct GDTPointer {
+typedef struct {
 	uint16_t limit;
 	uint32_t base;
-}__attribute__((packed)) GDTPointer;
+}__attribute__((packed)) GDTPointer_t;
 
-struct GDT_entry GDTTable [3] = {
+/* ---------------- Internal State ---------------- */
+GDTEntry_t GDTTable [3] = {
 	{0x0, 0x0, 0x0, 0x0},
 	{0x0, 0xfffff, 0x9a, 0xc},
 	{0x0, 0xfffff, 0x92, 0xc}
 };
+uint8_t gdt_data[3 * 8] __attribute__((aligned(8)));
 
-void encode_gdt_entry(uint8_t *target, struct GDT_entry source)
-{
-    
+/* ---------------- Internal Helper Prototypes ---------------- */
+void gdt_encode_entry(uint8_t *target, GDTEntry_t source);
+
+/* ---------------- Internal Helper Implementation ---------------- 
+* void gdt_encode_entry(uint8_t *target, GDTEntry_t source)
+*	-Encodes a GDTEntry into the correct format at target
+*/
+void gdt_encode_entry(uint8_t *target, GDTEntry_t source) {
     // Encode the limit
     target[0] = source.limit & 0xFF;
     target[1] = (source.limit >> 8) & 0xFF;
@@ -41,15 +51,16 @@ void encode_gdt_entry(uint8_t *target, struct GDT_entry source)
     target[6] |= (source.flags << 4);
 }
 
-uint8_t gdt_data[3 * 8] __attribute__((aligned(8)));
+/* ---------------- Public API Implementation ---------------- 
+* void gdt_init(void)
+*	-Initialises the GDT. Calls gdtReload.s
+*/
+void gdt_init(void) { 
+	for (int i = 0; i < 3; i++) {
+		gdt_encode_entry(&gdt_data[i * 8], GDTTable[i]);
+	}
 
-void init_gdt()
-{ 
-
-	for (int i = 0; i < 3; i++)
-	{encode_gdt_entry(&gdt_data[i * 8], GDTTable[i]);}
-
-	GDTPointer gdtp;
+	GDTPointer_t gdtp;
 
 	gdtp.limit = (3 * 8) - 1;
 	gdtp.base = (uint32_t)gdt_data;

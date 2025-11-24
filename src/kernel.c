@@ -22,15 +22,15 @@ void reboot()
     outb(0x64, 0xFE);
 }
 
-void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr) 
+void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr) 
 {
 	size_t kernelSize =  (size_t)_end - (size_t)_scode;
 
-	init_gdt();
-	init_serial();
+	gdt_init();
+	serial_init();
 
 	multiboot2_register_callback(framebuffer_multiboot2_init);
-	multiboot2_register_callback(memoryMap_multiboot2_init);
+	multiboot2_register_callback(memorymap_multiboot2_init);
 
 	serial_writestring("Welcome to SnakeOS!\n");
 	serial_writestring("----------------------------------------\n\n");
@@ -47,12 +47,12 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 	serial_newline();
 
 	serial_writestring("Multiboot magic: ");
-	serial_writehex(multiboot2_magic);
+	serial_writehex(multiboot2Magic);
 	serial_newline();
 
-	if (verify_multiboot(multiboot2_magic) == 0) {
+	if (multiboot2_verify(multiboot2Magic) == 0) {
 		serial_writestring("Multiboot 2 successfull\n");
-		multiboot2_parse(multiboot2_info_addr);
+		multiboot2_init(multiboot2InfoAddr);
 	} else {
 		serial_writestring("Multiboot 2 failed\n");
 		return;
@@ -85,12 +85,12 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 		reboot();
 	}
 
-	dump_memMap();
+	memorymap_dump();
 	serial_newline();
-	dump_usable_memory();
+	memorymap_dump_usable();
 	serial_newline();
 
-	init_bitmap_allocator((uintptr_t)_end);
+	pmm_init((uintptr_t)_end);
 
 	uintptr_t allocatedPage;
 	allocatedPage = palloc(16);
@@ -104,7 +104,7 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 		serial_newline();
 	}
 
-	if (pfree(allocatedPage, 16)) {
+	if (pfree(allocatedPage, 16) == 0) {
 		serial_writestring("Successfully freed pages \n");
 	} else {
 		serial_writestring("Uh oh, something went wrong. Failed to free pages \n");
@@ -151,7 +151,7 @@ void kernel_init(uint32_t multiboot2_magic, uint32_t multiboot2_info_addr)
 			uint8_t red = (x*255) / framebuffer.width;
 			uint8_t green = (y*255) / framebuffer.height;
 			uint8_t blue = ((framebuffer.height - y) * 255) / framebuffer.height;
-			uint32_t color = (red << framebuffer.red_pos) | (green << framebuffer.green_pos) | (blue << framebuffer.blue_pos);
+			uint32_t color = (red << framebuffer.redPos) | (green << framebuffer.greenPos) | (blue << framebuffer.bluePos);
 
 			size_t offset = y * framebuffer.pitch + x * framebuffer.bpp / 8;
 			uint8_t* fb = (uint8_t*)(uintptr_t)framebuffer.addr;

@@ -1,3 +1,4 @@
+/* ---------------- Includes ---------------- */
 #include <stdint.h>
 #include <stddef.h>
 #include "arch/memory/pmm.h"
@@ -5,187 +6,235 @@
 #include "arch/memory/memoryMap.h"
 #include "drivers/serial/serial.h"
 
+/* ---------------- Internal Constants ---------------- */
 #define PAGE_SIZE 4096
 #define BITS_PER_ROW 32
 
-static uint32_t* bitmap;
-static size_t bitmapLength;
-static uintptr_t totalPages;
-
+/* ---------------- Extern Symbols ---------------- */
 extern char _scode[], _end[];
 
-static uintptr_t lastAllocatedIndex = 0;
+/* ---------------- Internal Types ---------------- */
+typedef struct
+{
+	uint32_t* bitmap;
+	size_t bitmapLength;
+	uint64_t totalPages;
+	uint64_t lastAllocatedIndex;
+} PMMState_t;
 
-struct bitmapLocation
+typedef struct 
 {
 	uint32_t rowIndex;
 	uint8_t bitIndex;
-};
+} BitmapLocation_t;
 
-struct bitmapLocation get_location(uintptr_t pageIndex) {
-	struct bitmapLocation location;
+/* ---------------- Internal State ---------------- */
+static PMMState_t pmm;
+
+/* ---------------- Internal Helper Prototypes ---------------- */
+static BitmapLocation_t get_location(uint64_t pageIndex);
+static uint64_t page_to_address(uint64_t pageIndex);
+static uint64_t address_to_page(uint64_t address);
+static uint8_t bitmap_test(uint64_t pageIndex);
+static uint8_t bitmap_set(uint64_t pageIndex);
+static uint8_t bitmap_clear(uint64_t pageIndex);
+static void bitmap_clear_region_callback(const MemoryRegion_t* region);
+static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex);
+static void kernel_allocate(void);
+void bitmap_allocate(void);
+
+/* ---------------- Internal Helper Implementation ----------------
+* static BitmapLocation_t get_location(uint64_t pageIndex)
+*   -Returns the location of a page's bit in the bitmap (row and column)
+* static uint64_t page_to_address(uint64_t pageIndex)
+*   -Converts a page index to a physical address
+* static uint64_t address_to_page(uint64_t address)
+*   -Converts a physical address to a page index
+* static uint8_t bitmap_test(uint64_t pageIndex)
+*   -Checks if a page is allocated. Returns 0 if free, 1 if allocated
+* static uint8_t bitmap_set(uint64_t pageIndex)
+*   -Marks a page as allocated. Returns 0 on success, 1 on failure
+* static uint8_t bitmap_clear(uint64_t pageIndex)
+*   -Marks a page as free. Returns 0 on success, 1 on failure
+* static void bitmap_clear_region_callback(const MemoryRegion_t* region)
+*   -Clears all pages in the bitmap corresponding to the given memory region
+* static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex)
+*   -Finds a consecutive run of free pages of length pageCount between start and end.
+*   -Returns 0 on success (run found), 1 on failure (no run found). Writes start index of run to outIndex
+* static void kernel_allocate(void)
+*   -Reserves pages for the kernel code
+* void bitmap_allocate(void)
+*   -Reserves pages for the bitmap itself
+*/
+static BitmapLocation_t get_location(uint64_t pageIndex) {
+	BitmapLocation_t location;
 	location.rowIndex = pageIndex / BITS_PER_ROW;
 	location.bitIndex = pageIndex % BITS_PER_ROW;
 	return location;
 }
 
-uintptr_t get_address(uintptr_t pageIndex){
-	uintptr_t address = (pageIndex * PAGE_SIZE);
+static uint64_t page_to_address(uint64_t pageIndex){
+	uint64_t address = (pageIndex * PAGE_SIZE);
 	return address;
 }
 
-uintptr_t get_index(uintptr_t address){
-	uintptr_t pageIndex = (address / PAGE_SIZE);
+static uint64_t address_to_page(uint64_t address){
+	uint64_t pageIndex = (address / PAGE_SIZE);
 	return pageIndex;
 }
 
-uint8_t is_page_allocated(uintptr_t pageIndex) {
-	struct bitmapLocation location = get_location(pageIndex);
+static uint8_t bitmap_test(uint64_t pageIndex) {
+	BitmapLocation_t location = get_location(pageIndex);
 	uint32_t mask = (uint32_t) 1 << location.bitIndex;
 
-	if ((bitmap[location.rowIndex] & mask) == 0 ){
+	if ((pmm.bitmap[location.rowIndex] & mask) == 0 ){
 		return 0;
 	} else {
 		return 1;
 	}
 }
 
-uint8_t allocate_page(uintptr_t pageIndex) {
-	struct bitmapLocation location = get_location(pageIndex);
-
+static uint8_t bitmap_set(uint64_t pageIndex) {
+	BitmapLocation_t location = get_location(pageIndex);
 	uint32_t mask = (uint32_t) 1 << location.bitIndex;
 
-	if (is_page_allocated(pageIndex) == 0) {
-		bitmap[location.rowIndex] |= mask;
-		return 1;		
+	if (bitmap_test(pageIndex) == 0) {
+		pmm.bitmap[location.rowIndex] |= mask;
+		return 0;		
 	} else {
-		return 0;
-	}
-}
-
-uint8_t free_page(uintptr_t pageIndex) {
-	struct bitmapLocation location = get_location(pageIndex);
-
-	uint32_t mask = (uint32_t) 1 << location.bitIndex;
-
-	if (is_page_allocated(pageIndex) == 1) {
-		bitmap[location.rowIndex] &= ~mask;
 		return 1;
-	} else {
+	}
+}
+
+static uint8_t bitmap_clear(uint64_t pageIndex) {
+	BitmapLocation_t location = get_location(pageIndex);
+	uint32_t mask = (uint32_t) 1 << location.bitIndex;
+
+	if (bitmap_test(pageIndex) == 1) {
+		pmm.bitmap[location.rowIndex] &= ~mask;
 		return 0;
+	} else {
+		return 1;
 	}
 }
 
-static void free_region_callback(const memoryRegion_t* region) {
-	uintptr_t startPage = region->base / PAGE_SIZE;
-	uintptr_t pageCount = region->len / PAGE_SIZE;
-	for (uintptr_t pageIndex = startPage; pageIndex < startPage + pageCount; pageIndex++) {
-		free_page(pageIndex);
+static void bitmap_clear_region_callback(const MemoryRegion_t* region) {
+	uint64_t startPage = region->base / PAGE_SIZE;
+	uint64_t pageCount = region->len / PAGE_SIZE;
+	for (uint64_t pageIndex = startPage; pageIndex < startPage + pageCount; pageIndex++) {
+		bitmap_clear(pageIndex);
 	}
 }
 
-void init_bitmap_allocator(uintptr_t bitmap_addr) {
-	uint64_t totalMem = (uint64_t)memorymap_get_highest_address();
-
-	bitmap = (uint32_t*)((bitmap_addr + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)); //aligns bitmap to page boundary at bitmap_addr
-	totalPages = totalMem / PAGE_SIZE;
-	bitmapLength = ((totalPages + BITS_PER_ROW - 1) / BITS_PER_ROW); //calculates number of uint32_t required to map all pages
-
-	for (size_t i = 0; i < bitmapLength; i++) {
-		bitmap[i] = 0xffffffff;
-	}
-
-	memorymap_foreach_usable(free_region_callback);
-
-	//allocate kernel pages
-	uint32_t totalKernelPages = 0;
-	uintptr_t kernelStartPage = (uintptr_t)_scode / PAGE_SIZE;
-	uintptr_t kernelEndPage = ((uintptr_t)_end + PAGE_SIZE - 1) / PAGE_SIZE;
-	for (uintptr_t pageIndex = kernelStartPage; pageIndex < kernelEndPage; pageIndex ++) {
-		allocate_page(pageIndex);
-		totalKernelPages++;
-	}
-	serial_writestring("Reserved ");
-	serial_writedec(totalKernelPages);
-	serial_writestring(" kernel pages\n");
-
-	//the bitmap itself needs allocated RAM
-	uint32_t totalBitmapPages = 0;
-	uintptr_t bitmapStartPage = (uintptr_t)bitmap / PAGE_SIZE;
-	size_t bitmapMemSize = ((bitmapLength * sizeof(uint32_t)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-	uintptr_t bitmapEndPage = (bitmapStartPage + bitmapMemSize / PAGE_SIZE);
-	for (uintptr_t pageIndex = bitmapStartPage; pageIndex < bitmapEndPage; pageIndex ++) {
-		allocate_page(pageIndex);
-		totalBitmapPages++;
-	}
-	serial_writestring("Reserved ");
-	serial_writedec(totalBitmapPages);
-	serial_writestring(" bitmap pages\n");
-}
-
-int find_consecutive_free_pages(uintptr_t start, uintptr_t end, uint32_t pageCount, uintptr_t* outIndex) {
-	for (uintptr_t pageIndex = start; pageIndex < end; pageIndex++) {
-		if (is_page_allocated(pageIndex)) {
+static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex) {
+	for (uint64_t pageIndex = start; pageIndex < end; pageIndex++) {
+		if (bitmap_test(pageIndex)) {
 			continue;
 		}
 		uint8_t found = 1;
-		for (uintptr_t offset = 0; offset < pageCount; offset++) {
-            if (is_page_allocated(pageIndex + offset)) {
+		for (uint64_t offset = 0; offset < pageCount; offset++) {
+            if (bitmap_test(pageIndex + offset)) {
                 found = 0;
                 break;
             }
         }
 		if (found) {
 			*outIndex = pageIndex;
-			return 1;
+			return 0;
 		}
 	}
-	return 0;
+	return 1;
 }
 
-uintptr_t palloc(uint32_t pageCount) { //attempts to allocate pageCount pages, returns UINTPTR_MAX on failure
-	uint8_t success = 0;
-	uintptr_t foundIndex = 0;
+/* -- Kernel/Bitmap Reservation -- */
+static void kernel_allocate(void) {
+	uint64_t totalKernelPages = 0;
+	uint64_t kernelStartPage = (uint64_t)(uintptr_t)_scode / PAGE_SIZE;
+	uint64_t kernelEndPage = (uint64_t)((uintptr_t)_end + PAGE_SIZE - 1) / PAGE_SIZE;
+	for (uint64_t pageIndex = kernelStartPage; pageIndex < kernelEndPage; pageIndex ++) {
+		bitmap_set(pageIndex);
+		totalKernelPages++;
+	}
+}
 
-	if (bitmapLength == 0) {
+void bitmap_allocate(void) {
+	uint64_t totalBitmapPages = 0;
+	uint64_t bitmapStartPage = (uint64_t)(uintptr_t)pmm.bitmap / PAGE_SIZE;
+	size_t bitmapMemSize = ((pmm.bitmapLength * sizeof(uint32_t)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+	uint64_t bitmapEndPage = (bitmapStartPage + bitmapMemSize / PAGE_SIZE);
+	for (uint64_t pageIndex = bitmapStartPage; pageIndex < bitmapEndPage; pageIndex ++) {
+		bitmap_set(pageIndex);
+		totalBitmapPages++;
+	}
+}
+
+/* ---------------- Public API Implementation ---------------- 
+* void pmm_init(uint64_t addr)
+*	-Initialises the physical memory manager, placing bitmap at addr
+* uint64_t palloc(uint64_t pageCount)
+*	-Returns the physical address of an allocated page
+*	-Returns UINT64_MAX on failure
+* uint8_t pfree(uint64_t addr, uint64_t pageCount)
+*	-Frees pageCount pages starting at addr
+*	-Returns 0 if all pages were freed successfully. Returns 1 if any page failed
+*/
+void pmm_init(uint64_t addr) {
+	uint64_t totalMem = (uint64_t)memorymap_get_max_addr();
+
+	pmm.bitmap = (uint32_t*)((uintptr_t)((addr + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)));
+	pmm.totalPages = totalMem / PAGE_SIZE;
+	pmm.bitmapLength = ((pmm.totalPages + BITS_PER_ROW - 1) / BITS_PER_ROW);
+
+	for (size_t i = 0; i < pmm.bitmapLength; i++) {
+		pmm.bitmap[i] = 0xffffffff;
+	}
+
+	memorymap_foreach_usable(bitmap_clear_region_callback);
+	kernel_allocate();
+	bitmap_allocate();
+}
+
+uint64_t palloc(uint64_t pageCount) {
+	uint8_t status = 0;
+	uint64_t foundIndex = 0;
+
+	if (pmm.bitmapLength == 0) {
 		serial_writestring("NO MEMORY!! PANIC!!\n");
 	} else {
-		/* Pass one */
-		success = find_consecutive_free_pages(lastAllocatedIndex, totalPages, pageCount, &foundIndex);
-		/* Pass two */
-		if (!success) {
-			success = find_consecutive_free_pages(0, lastAllocatedIndex, pageCount, &foundIndex);
+		status = bitmap_find_run(pmm.lastAllocatedIndex, pmm.totalPages, pageCount, &foundIndex);
+		if (status == 1) {
+			status = bitmap_find_run(0, pmm.lastAllocatedIndex, pageCount, &foundIndex);
 		}
 	}
 
-	if (success) {
-		uintptr_t endIndex = foundIndex + pageCount;
-		for (uintptr_t pageIndex = foundIndex; pageIndex < endIndex; pageIndex++) {
-			allocate_page(pageIndex);
+	if (status == 0) {
+		uint64_t endIndex = foundIndex + pageCount;
+		for (uint64_t pageIndex = foundIndex; pageIndex < endIndex; pageIndex++) {
+			bitmap_set(pageIndex);
 		}
 
-		lastAllocatedIndex = foundIndex;
+		pmm.lastAllocatedIndex = foundIndex;
 
-		return get_address(foundIndex);
+		return page_to_address(foundIndex);
 	} else {
-		return UINTPTR_MAX;
+		return UINT64_MAX;
 	}
 }
 
-uint8_t pfree(uintptr_t address, uint32_t pageCount) { //attempts to free pageCount pages at address, returns 0 on success
-	uintptr_t startIndex = get_index(address);
-	uintptr_t endIndex = startIndex + pageCount;
+uint8_t pfree(uint64_t addr, uint64_t pageCount) {
+	uint64_t startIndex = address_to_page(addr);
+	uint64_t endIndex = startIndex + pageCount;
 
-	uint8_t success = 1;
+	uint8_t status = 0;
 
-	if (endIndex > totalPages) {
-		endIndex = totalPages;
+	if (endIndex > pmm.totalPages) {
+		endIndex = pmm.totalPages;
 	}
 
-	for (uintptr_t pageIndex = startIndex; pageIndex < endIndex; pageIndex++) {
-		if (!free_page(pageIndex)) {
-			success = 0;
+	for (uint64_t pageIndex = startIndex; pageIndex < endIndex; pageIndex++) {
+		if (bitmap_clear(pageIndex) == 1) {
+			status = 1;
 		} 
 	}
-	return success;
+	return status;
 }

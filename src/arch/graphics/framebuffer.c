@@ -1,66 +1,73 @@
+/* ---------------- Includes ---------------- */
 #include <stdint.h>
 #include <stddef.h>
 #include "arch/graphics/framebuffer.h"
 #include "arch/boot/multiboot2/multiboot2_consts.h"
 #include "drivers/serial/serial.h"
 
-framebuffer_t framebuffer = {0};
-
-struct multiboot2_tag_framebuffer
+/* ---------------- Internal Types ---------------- */
+typedef struct 
 {
   uint32_t type;
   uint32_t size;
 
-  uint64_t framebuffer_addr;
-  uint32_t framebuffer_pitch;
-  uint32_t framebuffer_width;
-  uint32_t framebuffer_height;
-  uint8_t framebuffer_bpp;
-  uint8_t framebuffer_type;
+  uint64_t framebufferAddr;
+  uint32_t framebufferPitch;
+  uint32_t framebufferWidth;
+  uint32_t framebufferHeight;
+  uint8_t framebufferBpp;
+  uint8_t framebufferType;
   uint16_t reserved;
 
   struct {
-	uint8_t framebuffer_red_field_position;
-    uint8_t framebuffer_red_mask_size;
-    uint8_t framebuffer_green_field_position;
-    uint8_t framebuffer_green_mask_size;
-    uint8_t framebuffer_blue_field_position;
-    uint8_t framebuffer_blue_mask_size;
+	uint8_t framebufferRedFieldPosition;
+    uint8_t framebufferRedMaskSize;
+    uint8_t framebufferGreenFieldPosition;
+    uint8_t framebufferGreenMaskSize;
+    uint8_t framebufferBlueFieldPosition;
+    uint8_t framebufferBlueMaskSize;
   };
-};
+} Multiboot2TagFramebuffer_t;
 
+/* ---------------- Internal State ---------------- */
+Framebuffer_t framebuffer = {0};
+
+/* ---------------- Public API Implementation ---------------- 
+* void framebuffer_multiboot2_init(const void* tag)
+*	-Initialises framebuffer from a Multiboot2 framebuffer tag
+*/
 void framebuffer_multiboot2_init(const void* tag) {
-	const struct multiboot2_tag_framebuffer* framebuffer_tag = tag;
+	const Multiboot2TagFramebuffer_t* framebufferTag = tag;
 
-	if (framebuffer_tag->type != TAG_FRAMEBUFFER) {
+	if (framebufferTag->type != TAG_FRAMEBUFFER) {
 		serial_writestring("Not a framebuffer tag! Tag: ");
-		serial_writehex(framebuffer_tag->type);
+		serial_writehex(framebufferTag->type);
 		serial_newline();
 		return;
 	}
 
 	serial_writestring("Framebuffer tag found!\n");
 	serial_writestring("	Type: ");
-	serial_writehex(framebuffer_tag->type);
+	serial_writehex(framebufferTag->type);
 	serial_newline();
 	serial_writestring("	Size: ");
-	serial_writehex(framebuffer_tag->size);
+	serial_writehex(framebufferTag->size);
 	serial_newline();
 
-	framebuffer.addr = framebuffer_tag->framebuffer_addr;
-	framebuffer.pitch = framebuffer_tag->framebuffer_pitch;
-	framebuffer.width = framebuffer_tag-> framebuffer_width;
-	framebuffer.height = framebuffer_tag->framebuffer_height;
-	framebuffer.bpp = framebuffer_tag->framebuffer_bpp;
-	framebuffer.type = framebuffer_tag->framebuffer_type;
+	framebuffer.addr = framebufferTag->framebufferAddr;
+	framebuffer.pitch = framebufferTag->framebufferPitch;
+	framebuffer.width = framebufferTag-> framebufferWidth;
+	framebuffer.height = framebufferTag->framebufferHeight;
+	framebuffer.bpp = framebufferTag->framebufferBpp;
+	framebuffer.type = framebufferTag->framebufferType;
 
 	if (framebuffer.type == FRAMEBUFFER_RGB) {
-		framebuffer.red_pos = framebuffer_tag->framebuffer_red_field_position;
-		framebuffer.green_pos = framebuffer_tag->framebuffer_green_field_position;
-		framebuffer.blue_pos = framebuffer_tag->framebuffer_blue_field_position;
+		framebuffer.redPos = framebufferTag->framebufferRedFieldPosition;
+		framebuffer.greenPos = framebufferTag->framebufferGreenFieldPosition;
+		framebuffer.bluePos = framebufferTag->framebufferBlueFieldPosition;
 	} else {
-		framebuffer.red_pos = -1;
-		framebuffer.green_pos = -1;
-		framebuffer.blue_pos = -1;
+		framebuffer.redPos = -1;
+		framebuffer.greenPos = -1;
+		framebuffer.bluePos = -1;
 	}
 }

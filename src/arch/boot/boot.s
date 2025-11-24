@@ -1,3 +1,10 @@
+/* Kernel entry point and stack setup.
+	- Allocate 16KB stack in .bss
+	- Setup %esp
+	- Push Multiboot2 info onto stack
+	- Call kernel_init()
+	- Halt CPU if kernel returns
+*/
 .section .bss
 .align 16
 
@@ -10,16 +17,16 @@ stack_top:
 .global _start
 .type _start, @function
 _start:
-	mov $stack_top, %esp
+	mov $stack_top, %esp               /* Set stack pointer to top of stack*/
 
-	/* kernel entry point */
-    push %ebx
-    push %eax
-	call kernel_init
 	
-	/* halt */
-	cli
-1: 	hlt
+    push %ebx                          /* Push Multiboot2 info address */
+    push %eax                          /* Push Multiboot2 magic*/
+	call kernel_init                   /* Call kernel entry function */
+	
+	
+	cli                                /* Disable interrupts*/
+1: 	hlt                                /* Halt CPU */
 	jmp 1b
 	
 .size _start, . - _start

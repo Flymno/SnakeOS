@@ -1,9 +1,11 @@
 #ifndef FRAMEBUFFER_H_
 #define FRAMEBUFFER_H_
 
+/* ---------------- Includes ---------------- */ 
 #include <stdint.h>
 
-typedef struct framebuffer {
+/* ---------------- Public Types ---------------- */ 
+typedef struct {
     uint64_t addr;
     uint32_t pitch;
     uint32_t width;
@@ -11,14 +13,19 @@ typedef struct framebuffer {
     uint8_t  bpp;
     uint8_t  type;
 
-    uint8_t red_pos;
-    uint8_t green_pos;
-    uint8_t blue_pos;
+    uint8_t redPos;
+    uint8_t greenPos;
+    uint8_t bluePos;
 
-} framebuffer_t;
+} Framebuffer_t;
 
-extern framebuffer_t framebuffer;
+/* ---------------- Public State ---------------- */ 
+extern Framebuffer_t framebuffer;
 
+/* ---------------- Public API Prototypes ---------------- 
+* void framebuffer_multiboot2_init(const void* tag)
+*	-Initialises framebuffer from a Multiboot2 framebuffer tag
+*/
 void framebuffer_multiboot2_init(const void* tag);
 
 #endif
