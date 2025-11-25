@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "lib/string.h"
+#include "drivers/serial/serial.h"
 
 void * memcpy(void *dest, const void *src, size_t n) {
 	const unsigned char *csrc = (const unsigned char *)src;
@@ -21,6 +22,15 @@ void * memset(void *dest, uint8_t value, size_t n) {
 		cdest[i] = cvalue;
 	}
 
+	return dest;
+}
+
+char* strcpy(char* dest, const char* src) {
+	size_t len = 0;
+	len = strlen(src);
+	for (size_t i = 0; i < len; i++) {
+		dest[i] = src[i];
+	}
 	return dest;
 }
 

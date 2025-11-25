@@ -159,6 +159,4 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 			*((uint32_t*)(fb + offset)) = color;
 		}
 	}
-
-	
 }
