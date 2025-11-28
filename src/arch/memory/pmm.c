@@ -5,6 +5,7 @@
 #include "arch/boot/multiboot2/multiboot2.h"
 #include "arch/memory/memoryMap.h"
 #include "drivers/serial/serial.h"
+#include "lib/string.h"
 
 /* ---------------- Internal Constants ---------------- */
 #define PAGE_SIZE 4096
@@ -185,9 +186,11 @@ void pmm_init(uint64_t addr) {
 	pmm.totalPages = totalMem / PAGE_SIZE;
 	pmm.bitmapLength = ((pmm.totalPages + BITS_PER_ROW - 1) / BITS_PER_ROW);
 
-	for (size_t i = 0; i < pmm.bitmapLength; i++) {
-		pmm.bitmap[i] = 0xffffffff;
-	}
+	// for (size_t i = 0; i < pmm.bitmapLength; i++) {
+	// 	pmm.bitmap[i] = 0xffffffff;
+	// }
+
+	memset(pmm.bitmap, 0xff, pmm.bitmapLength * BITS_PER_ROW);
 
 	memorymap_foreach_usable(bitmap_clear_region_callback);
 	kernel_allocate();
