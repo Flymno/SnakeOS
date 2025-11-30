@@ -12,7 +12,7 @@
 #define BITS_PER_ROW 32
 
 /* ---------------- Extern Symbols ---------------- */
-extern char _scode[], _end[];
+extern char _physStart[], _physEnd[];
 
 /* ---------------- Internal Types ---------------- */
 typedef struct
@@ -150,8 +150,8 @@ static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount,
 /* -- Kernel/Bitmap Reservation -- */
 static void kernel_allocate(void) {
 	uint64_t totalKernelPages = 0;
-	uint64_t kernelStartPage = (uint64_t)(uintptr_t)_scode / PAGE_SIZE;
-	uint64_t kernelEndPage = (uint64_t)((uintptr_t)_end + PAGE_SIZE - 1) / PAGE_SIZE;
+	uint64_t kernelStartPage = (uint64_t)(uintptr_t)_physStart / PAGE_SIZE;
+	uint64_t kernelEndPage = (uint64_t)((uintptr_t)_physEnd + PAGE_SIZE - 1) / PAGE_SIZE;
 	for (uint64_t pageIndex = kernelStartPage; pageIndex < kernelEndPage; pageIndex ++) {
 		bitmap_set(pageIndex);
 		totalKernelPages++;

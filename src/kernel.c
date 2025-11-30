@@ -11,7 +11,7 @@
 
 #define MAX_MEMMAP_ENTRIES 64
 
-extern char _scode[], _end[];
+extern char _physStart[], _physEnd[], _vStart[], _vEnd[];
 
 
 void reboot()
@@ -24,7 +24,7 @@ void reboot()
 
 void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr) 
 {
-	size_t kernelSize =  (size_t)_end - (size_t)_scode;
+	size_t kernelSize =  (size_t)_physEnd - (size_t)_physStart;
 
 	gdt_init();
 	serial_init();
@@ -36,10 +36,10 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 	serial_writestring("----------------------------------------\n\n");
 
 	serial_writestring("Kernel base address: ");
-	serial_writehex((size_t)_scode);
+	serial_writehex((size_t)_vStart);
 	serial_newline();
 	serial_writestring("Kernel end address: ");
-	serial_writehex((size_t)_end);
+	serial_writehex((size_t)_vEnd);
 	serial_newline();
 	serial_writestring("Kernel Size: ");
 	serial_writehex(kernelSize);
@@ -90,7 +90,7 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 	memorymap_dump_usable();
 	serial_newline();
 
-	pmm_init((uintptr_t)_end);
+	pmm_init((uintptr_t)_vEnd);
 
 	uintptr_t allocatedPage;
 	allocatedPage = palloc(16);
@@ -146,17 +146,17 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 		serial_newline();
 	}
 
-	for (size_t y = 0; y < framebuffer.height; y++) {
-		for (size_t x=0; x < framebuffer.width; x++) {
-			uint8_t red = (x*255) / framebuffer.width;
-			uint8_t green = (y*255) / framebuffer.height;
-			uint8_t blue = ((framebuffer.height - y) * 255) / framebuffer.height;
-			uint32_t color = (red << framebuffer.redPos) | (green << framebuffer.greenPos) | (blue << framebuffer.bluePos);
+	// for (size_t y = 0; y < framebuffer.height; y++) {
+	// 	for (size_t x=0; x < framebuffer.width; x++) {
+	// 		uint8_t red = (x*255) / framebuffer.width;
+	// 		uint8_t green = (y*255) / framebuffer.height;
+	// 		uint8_t blue = ((framebuffer.height - y) * 255) / framebuffer.height;
+	// 		uint32_t color = (red << framebuffer.redPos) | (green << framebuffer.greenPos) | (blue << framebuffer.bluePos);
 
-			size_t offset = y * framebuffer.pitch + x * framebuffer.bpp / 8;
-			uint8_t* fb = (uint8_t*)(uintptr_t)framebuffer.addr;
+	// 		size_t offset = y * framebuffer.pitch + x * framebuffer.bpp / 8;
+	// 		uint8_t* fb = (uint8_t*)(uintptr_t)framebuffer.addr;
 			
-			*((uint32_t*)(fb + offset)) = color;
-		}
-	}
+	// 		*((uint32_t*)(fb + offset)) = color;
+	// 	}
+	// }
 }

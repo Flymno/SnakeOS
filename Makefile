@@ -7,6 +7,7 @@ OBJ_DIR := obj
 SRCS := \
 	kernel.c	\
 	arch/boot/boot.s \
+	arch/boot/paging/initHighHalf.c \
 	arch/gdt/gdtInit.s \
 	arch/gdt/gdtReload.c \
 	arch/hwio/ports.c \
