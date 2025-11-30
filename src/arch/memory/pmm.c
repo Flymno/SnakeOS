@@ -42,7 +42,7 @@ static uint8_t bitmap_clear(uint64_t pageIndex);
 static void bitmap_clear_region_callback(const MemoryRegion_t* region);
 static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex);
 static void kernel_allocate(void);
-void bitmap_allocate(void);
+static void bitmap_allocate(void);
 
 /* ---------------- Internal Helper Implementation ----------------
 * static BitmapLocation_t get_location(uint64_t pageIndex)
@@ -158,7 +158,7 @@ static void kernel_allocate(void) {
 	}
 }
 
-void bitmap_allocate(void) {
+static void bitmap_allocate(void) {
 	uint64_t totalBitmapPages = 0;
 	uint64_t bitmapStartPage = (uint64_t)(uintptr_t)pmm.bitmap / PAGE_SIZE;
 	size_t bitmapMemSize = ((pmm.bitmapLength * sizeof(uint32_t)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
