@@ -1,7 +1,7 @@
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
 #include <stddef.h>
-#include "arch/memory/pmm.h"
+#include "arch/memory/pmm/pmm.h"
 #include "arch/boot/multiboot2/multiboot2.h"
 #include "arch/memory/memoryMap.h"
 #include "drivers/serial/serial.h"

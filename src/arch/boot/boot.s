@@ -1,4 +1,4 @@
-.section .bootstrap.bss, "a"
+.section .bootstrap.bss, "aw"
 .align 16
 
 boot_stack_bottom:

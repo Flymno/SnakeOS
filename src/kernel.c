@@ -4,7 +4,7 @@
 #include "drivers/serial/serial.h"
 #include "arch/hwio/ports.h"
 #include "arch/boot/multiboot2/multiboot2.h"
-#include "arch/memory/pmm.h"
+#include "arch/memory/pmm/pmm.h"
 #include "arch/memory/memoryMap.h"
 #include "arch/gdt/gdtInit.h"
 #include "arch/graphics/framebuffer.h"
