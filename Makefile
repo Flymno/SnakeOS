@@ -14,6 +14,7 @@ SRCS := \
 	arch/x86/gdt/gdtInit.c \
 	arch/x86/graphics/framebuffer.c \
 	arch/x86/hwio/ports.c \
+	arch/x86/memory/util/memUtil.c \
 	arch/x86/memory/pmm/pmm.c \
 	arch/x86/memory/map/memoryMap.c \
 	drivers/x86/serial/serial.c \

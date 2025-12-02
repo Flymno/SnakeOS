@@ -4,6 +4,7 @@
 #include "arch/x86/memory/pmm/pmm.h"
 #include "arch/x86/boot/multiboot2.h"
 #include "arch/x86/memory/map/memoryMap.h"
+#include "arch/x86/memory/util/memUtil.h"
 #include "drivers/x86/serial/serial.h"
 #include "lib/string.h"
 
@@ -41,8 +42,9 @@ static uint8_t bitmap_set(uint64_t pageIndex);
 static uint8_t bitmap_clear(uint64_t pageIndex);
 static void bitmap_clear_region_callback(const MemoryRegion_t* region);
 static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex);
-static void kernel_allocate(void);
+static void low_reserve(void);
 static void bitmap_allocate(void);
+static void high_reserve(void);
 
 /* ---------------- Internal Helper Implementation ----------------
 * static BitmapLocation_t get_location(uint64_t pageIndex)
@@ -62,10 +64,12 @@ static void bitmap_allocate(void);
 * static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex)
 *   -Finds a consecutive run of free pages of length pageCount between start and end.
 *   -Returns 0 on success (run found), 1 on failure (no run found). Writes start index of run to outIndex
-* static void kernel_allocate(void)
-*   -Reserves pages for the kernel code
-* void bitmap_allocate(void)
+* static void low_reserve(void)
+*   -Reserves pages for the kernel code, early paging structures, and low-mem
+* static void bitmap_allocate(void)
 *   -Reserves pages for the bitmap itself
+* static void high_reserve(void)
+*	-Reserves all pages above 4GB as they are not accessible in protected mode
 */
 static BitmapLocation_t get_location(uint64_t pageIndex) {
 	BitmapLocation_t location;
@@ -148,24 +152,28 @@ static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount,
 }
 
 /* -- Kernel/Bitmap Reservation -- */
-static void kernel_allocate(void) {
-	uint64_t totalKernelPages = 0;
-	uint64_t kernelStartPage = (uint64_t)(uintptr_t)_physStart / PAGE_SIZE;
+static void low_reserve(void) {
 	uint64_t kernelEndPage = (uint64_t)((uintptr_t)_physEnd + PAGE_SIZE - 1) / PAGE_SIZE;
-	for (uint64_t pageIndex = kernelStartPage; pageIndex < kernelEndPage; pageIndex ++) {
+	for (uint64_t pageIndex = 0; pageIndex < kernelEndPage; pageIndex ++) {
 		bitmap_set(pageIndex);
-		totalKernelPages++;
 	}
 }
 
 static void bitmap_allocate(void) {
-	uint64_t totalBitmapPages = 0;
-	uint64_t bitmapStartPage = (uint64_t)(uintptr_t)pmm.bitmap / PAGE_SIZE;
+	uint64_t bitmapStartPage = (uint64_t)v2p((uintptr_t)pmm.bitmap) / PAGE_SIZE;
 	size_t bitmapMemSize = ((pmm.bitmapLength * sizeof(uint32_t)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
 	uint64_t bitmapEndPage = (bitmapStartPage + bitmapMemSize / PAGE_SIZE);
 	for (uint64_t pageIndex = bitmapStartPage; pageIndex < bitmapEndPage; pageIndex ++) {
 		bitmap_set(pageIndex);
-		totalBitmapPages++;
+	}
+}
+
+static void high_reserve(void) {
+	uint64_t limitBoundaryPage = ((uint64_t)0x100000000ULL) / PAGE_SIZE;
+	if (pmm.totalPages > limitBoundaryPage) {
+		for (uint64_t pageIndex = limitBoundaryPage; pageIndex < pmm.totalPages; pageIndex ++) {
+			bitmap_set(pageIndex);
+		}
 	}
 }
 
@@ -193,8 +201,9 @@ void pmm_init(uint64_t addr) {
 	memset(pmm.bitmap, 0xff, pmm.bitmapLength * sizeof(uint32_t));
 
 	memorymap_foreach_usable(bitmap_clear_region_callback);
-	kernel_allocate();
+	low_reserve();
 	bitmap_allocate();
+	high_reserve();
 }
 
 uint64_t palloc(uint64_t pageCount) {
