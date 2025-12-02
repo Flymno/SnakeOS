@@ -1,6 +1,6 @@
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
-#include "arch/hwio/ports.h"
+#include "arch/x86/hwio/ports.h"
 
 /* ---------------- Internal Constants ---------------- */
 #define PIC1 0x20

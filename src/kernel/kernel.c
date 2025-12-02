@@ -1,13 +1,13 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "lib/string.h"
-#include "drivers/serial/serial.h"
-#include "arch/hwio/ports.h"
-#include "arch/boot/multiboot2/multiboot2.h"
-#include "arch/memory/pmm/pmm.h"
-#include "arch/memory/memoryMap.h"
-#include "arch/gdt/gdtInit.h"
-#include "arch/graphics/framebuffer.h"
+#include "drivers/x86/serial/serial.h"
+#include "arch/x86/hwio/ports.h"
+#include "arch/x86/boot/multiboot2.h"
+#include "arch/x86/memory/pmm/pmm.h"
+#include "arch/x86/memory/map/memoryMap.h"
+#include "arch/x86/gdt/gdtInit.h"
+#include "arch/x86/graphics/framebuffer.h"
 
 #define MAX_MEMMAP_ENTRIES 64
 

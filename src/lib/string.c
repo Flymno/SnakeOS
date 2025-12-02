@@ -1,7 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "lib/string.h"
-#include "drivers/serial/serial.h"
 
 void* memcpy(void *dest, const void *src, size_t n) {
 	const unsigned char *csrc = (const unsigned char *)src;

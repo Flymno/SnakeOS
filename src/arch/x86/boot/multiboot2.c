@@ -1,10 +1,10 @@
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
-#include "arch/boot/multiboot2/multiboot2.h"
-#include "drivers/serial/serial.h"
-#include "arch/memory/memoryMap.h"
-#include "arch/graphics/framebuffer.h"
-#include "arch/boot/multiboot2/multiboot2_consts.h"
+#include "arch/x86/boot/multiboot2.h"
+#include "drivers/x86/serial/serial.h"
+#include "arch/x86/memory/map/memoryMap.h"
+#include "arch/x86/graphics/framebuffer.h"
+#include "arch/x86/boot/multiboot2_consts.h"
 
 /* ---------------- Internal Constants ---------------- */
 #define MAX_CALLBACKS 64

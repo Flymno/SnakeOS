@@ -1,6 +1,8 @@
 #ifndef SERIAL_H_
 #define SERIAL_H_
 
+#include <stdint.h>
+
 /* ---------------- Public API Prototypes ---------------- 
 * void serial_init()
 *   -Initialises the serial port hardware (COM1)

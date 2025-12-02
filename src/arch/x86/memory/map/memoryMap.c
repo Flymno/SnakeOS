@@ -1,9 +1,9 @@
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
 #include <stddef.h>
-#include "arch/memory/memoryMap.h"
-#include "arch/boot/multiboot2/multiboot2_consts.h"
-#include "drivers/serial/serial.h"
+#include "arch/x86/memory/map/memoryMap.h"
+#include "arch/x86/boot/multiboot2_consts.h"
+#include "drivers/x86/serial/serial.h"
 
 /* ---------------- Internal Constants ---------------- */
 #define MAX_MEMMAP_ENTRIES 64

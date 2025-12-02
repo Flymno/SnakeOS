@@ -2,9 +2,7 @@
 #define PMM_H_
 
 /* ---------------- Includes ---------------- */
-#include <stddef.h>
-#include "arch/boot/multiboot2/multiboot2.h"
-#include "arch/memory/memoryMap.h"
+#include <stdint.h>
 
 /* ---------------- Public API Prototypes ---------------- 
 * void pmm_init(uint64_t addr)

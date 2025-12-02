@@ -5,19 +5,19 @@ export PATH := $(HOME)/opt/cross/bin:/usr/bin:/bin:$(PATH)
 SRC_DIR := src
 OBJ_DIR := obj
 SRCS := \
-	kernel.c	\
-	arch/boot/boot.s \
-	arch/boot/paging/initHighHalf.c \
-	arch/gdt/gdtInit.s \
-	arch/gdt/gdtReload.c \
-	arch/hwio/ports.c \
-	arch/boot/multiboot2/multiboot2_header.s \
-	arch/boot/multiboot2/multiboot2.c \
-	arch/memory/pmm.c \
-	arch/memory/memoryMap.c \
-	arch/graphics/framebuffer.c \
-	lib/string.c \
-	drivers/serial/serial.c 
+	kernel/kernel.c	\
+	arch/x86/asm/boot/boot.s \
+	arch/x86/asm/gdt/gdtReload.s \
+	arch/x86/asm/boot/multiboot2_header.s \
+	arch/x86/boot/multiboot2.c \
+	arch/x86/boot/initHighHalf.c \
+	arch/x86/gdt/gdtInit.c \
+	arch/x86/graphics/framebuffer.c \
+	arch/x86/hwio/ports.c \
+	arch/x86/memory/pmm/pmm.c \
+	arch/x86/memory/map/memoryMap.c \
+	drivers/x86/serial/serial.c \
+	lib/string.c
 SRCS := $(SRCS:%=$(SRC_DIR)/%)
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(filter %.c, $(SRCS))) \
         $(patsubst $(SRC_DIR)/%.s, $(OBJ_DIR)/%.o, $(filter %.s, $(SRCS)))

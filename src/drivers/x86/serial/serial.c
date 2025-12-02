@@ -1,9 +1,9 @@
 /* ---------------- Includes ---------------- */
 #include <stddef.h>
 #include <stdint.h>
-#include "drivers/serial/serial.h"
+#include "drivers/x86/serial/serial.h"
 #include "lib/string.h"
-#include "arch/hwio/ports.h"
+#include "arch/x86/hwio/ports.h"
 
 
 
