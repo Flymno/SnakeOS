@@ -8,7 +8,7 @@ SRCS := \
 	kernel/kernel.c	\
 	arch/x86/asm/boot/boot.s \
 	arch/x86/asm/gdt/gdtReload.s \
-	arch/x86/asm/boot/multiboot2_header.s \
+	arch/x86/asm/boot/multiboot2Header.s \
 	arch/x86/boot/multiboot2.c \
 	arch/x86/boot/initHighHalf.c \
 	arch/x86/gdt/gdtInit.c \

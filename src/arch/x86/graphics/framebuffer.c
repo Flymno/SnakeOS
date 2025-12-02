@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "arch/x86/graphics/framebuffer.h"
-#include "arch/x86/boot/multiboot2_consts.h"
+#include "arch/x86/boot/multiboot2Consts.h"
 #include "drivers/x86/serial/serial.h"
 
 /* ---------------- Internal Types ---------------- */

@@ -4,7 +4,7 @@
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
 #include <stddef.h>
-#include "arch/x86/boot/multiboot2_consts.h"
+#include "arch/x86/boot/multiboot2Consts.h"
 
 /* ---------------- Public Constants ---------------- */
 #define MAX_MEMMAP_ENTRIES 64
