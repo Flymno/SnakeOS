@@ -132,22 +132,32 @@ static void bitmap_clear_region_callback(const MemoryRegion_t* region) {
 }
 
 static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex) {
-	for (uint64_t pageIndex = start; pageIndex < end; pageIndex++) {
+	for (uint64_t pageIndex = start; pageIndex < end;) {
+		if (pageIndex + pageCount > end) {
+			return 1;
+		}
+
 		if (bitmap_test(pageIndex)) {
+			pageIndex ++;
 			continue;
 		}
+
 		uint8_t found = 1;
 		for (uint64_t offset = 0; offset < pageCount; offset++) {
-            if (bitmap_test(pageIndex + offset)) {
+			uint64_t current = pageIndex + offset;
+            if (current >= end || bitmap_test(current)) {
                 found = 0;
+				pageIndex = current + 1;
                 break;
             }
         }
+
 		if (found) {
 			*outIndex = pageIndex;
 			return 0;
 		}
 	}
+
 	return 1;
 }
 
@@ -180,7 +190,7 @@ static void high_reserve(void) {
 /* ---------------- Public API Implementation ---------------- 
 * void pmm_init(uint64_t addr)
 *	-Initialises the physical memory manager, placing bitmap at addr
-* uint64_t palloc(uint64_t pageCount)
+* uint64_t palloc(uint64_t pageCount, PallocFlags_t flags)
 *	-Returns the physical address of an allocated page
 *	-Returns UINT64_MAX on failure
 * uint8_t pfree(uint64_t addr, uint64_t pageCount)
@@ -204,19 +214,23 @@ void pmm_init(uint64_t addr) {
 	low_reserve();
 	bitmap_allocate();
 	high_reserve();
+
+	pmm.lastAllocatedIndex = address_to_page(0x00800000);
 }
 
-uint64_t palloc(uint64_t pageCount) {
+uint64_t palloc(uint64_t pageCount, PallocFlags_t flags) {
 	uint8_t status = 0;
 	uint64_t foundIndex = 0;
 
 	if (pmm.bitmapLength == 0) {
 		serial_writestring("NO MEMORY!! PANIC!!\n");
-	} else {
+	} else if (flags == PALLOC_ANY) {
 		status = bitmap_find_run(pmm.lastAllocatedIndex, pmm.totalPages, pageCount, &foundIndex);
 		if (status == 1) {
-			status = bitmap_find_run(0, pmm.lastAllocatedIndex, pageCount, &foundIndex);
+			status = bitmap_find_run(address_to_page(0x00800000), pmm.lastAllocatedIndex, pageCount, &foundIndex);
 		}
+	} else if (flags == PALLOC_LOWMEM) {
+		status = bitmap_find_run(0, address_to_page(0x00800000), pageCount, &foundIndex);
 	}
 
 	if (status == 0) {
@@ -225,7 +239,7 @@ uint64_t palloc(uint64_t pageCount) {
 			bitmap_set(pageIndex);
 		}
 
-		pmm.lastAllocatedIndex = foundIndex;
+		pmm.lastAllocatedIndex = foundIndex + pageCount;
 
 		return page_to_address(foundIndex);
 	} else {
