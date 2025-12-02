@@ -53,6 +53,7 @@ clean:
 	$(RM) -r obj
 
 fclean:
+	$(MAKE) clean
 	$(RM) build/SnakeOS.iso
 
 re:
