@@ -190,7 +190,7 @@ void pmm_init(uint64_t addr) {
 	// 	pmm.bitmap[i] = 0xffffffff;
 	// }
 
-	memset(pmm.bitmap, 0xff, pmm.bitmapLength * BITS_PER_ROW);
+	memset(pmm.bitmap, 0xff, pmm.bitmapLength * sizeof(uint32_t));
 
 	memorymap_foreach_usable(bitmap_clear_region_callback);
 	kernel_allocate();
