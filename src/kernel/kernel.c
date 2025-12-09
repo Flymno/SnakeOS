@@ -93,7 +93,7 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 	pmm_init((uintptr_t)_vEnd);
 
 	uintptr_t allocatedPage;
-	allocatedPage = palloc(16);
+	allocatedPage = palloc(16, PALLOC_ANY);
 	if (allocatedPage != UINTPTR_MAX) {
 		serial_writestring("Successfully requested pages. Returned Value: ");
 		serial_writehex(allocatedPage);
@@ -110,7 +110,7 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 		serial_writestring("Uh oh, something went wrong. Failed to free pages \n");
 	}
 
-	allocatedPage = palloc(16);
+	allocatedPage = palloc(16, PALLOC_ANY);
 	if (allocatedPage != UINTPTR_MAX) {
 		serial_writestring("Successfully requested pages. Returned Value: ");
 		serial_writehex(allocatedPage);
@@ -122,7 +122,7 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 	}
 
 	uintptr_t allocatedPage2;
-	allocatedPage2 = palloc(16);
+	allocatedPage2 = palloc(16, PALLOC_ANY);
 	if (allocatedPage2 != UINTPTR_MAX) {
 		serial_writestring("Successfully requested pages. Returned Value: ");
 		serial_writehex(allocatedPage2);
@@ -135,7 +135,7 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 
 
 	uintptr_t allocatedPage3;
-	allocatedPage3 = palloc(500);
+	allocatedPage3 = palloc(50000, PALLOC_LOWMEM);
 	if (allocatedPage3 != UINTPTR_MAX) {
 		serial_writestring("Successfully requested pages. Returned Value: ");
 		serial_writehex(allocatedPage3);
