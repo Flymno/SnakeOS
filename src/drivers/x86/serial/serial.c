@@ -8,7 +8,7 @@
 
 
 /* ---------------- Internal Helper Prototypes ---------------- */
-static uint8_t serial_can_write(void);
+static size_t serial_can_write(void);
 static void serial_putchar(char c);
 
 /* ---------------- Internal Helper Implementation ---------------- 
@@ -17,7 +17,7 @@ static void serial_putchar(char c);
 * static void serial_putchar(char c)
 *   -Writes a byte to the serial port
 */
-static uint8_t serial_can_write(void) {
+static size_t serial_can_write(void) {
 	return inb(0x3f8 + 5) & 0x20;
  }
 
@@ -61,7 +61,7 @@ void serial_newline(void) {
 void serial_writehex(uint32_t val) {
     char buf[11] = "0x00000000";
     const char* hexChars = "0123456789ABCDEF";
-    for (int i = 0; i < 8; i++) {
+    for (size_t i = 0; i < 8; i++) {
         buf[9 - i] = hexChars[val & 0xF];
         val >>= 4;
     }
@@ -76,12 +76,12 @@ void serial_writedec(uint32_t val) {
         buf[pos++] = '0';
     } else {
         char tmp[10];
-        int tmpPos = 0;
+        size_t tmpPos = 0;
         while (val > 0) {
             tmp[tmpPos++] = '0' + (val % 10);
             val /= 10;
         }
-        for (int i = tmpPos - 1; i >= 0; i--) {
+        for (size_t i = tmpPos - 1; i >= 0; i--) {
             buf[pos++] = tmp[i];
         }
     }

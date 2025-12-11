@@ -3,29 +3,22 @@
 
 /* ---------------- Includes ---------------- */ 
 #include <stdint.h>
-
-/* ---------------- Public Types ---------------- */ 
-typedef struct {
-    uint64_t addr;
-    uint32_t pitch;
-    uint32_t width;
-    uint32_t height;
-    uint8_t  bpp;
-    uint8_t  type;
-
-    uint8_t redPos;
-    uint8_t greenPos;
-    uint8_t bluePos;
-
-} Framebuffer_t;
-
-/* ---------------- Public State ---------------- */ 
-extern Framebuffer_t framebuffer;
+#include <stddef.h>
 
 /* ---------------- Public API Prototypes ---------------- 
 * void framebuffer_multiboot2_init(const void* tag)
 *	-Initialises framebuffer from a Multiboot2 framebuffer tag
 */
 void framebuffer_multiboot2_init(const void* tag);
+
+uint64_t framebuffer_get_address(void);
+size_t framebuffer_get_pitch(void);
+size_t framebuffer_get_width(void);
+size_t framebuffer_get_height(void);
+size_t framebuffer_get_bpp(void);
+size_t framebuffer_get_type(void);
+uint8_t framebuffer_get_red_field_pos(void);
+uint8_t framebuffer_get_green_field_pos(void);
+uint8_t framebuffer_get_blue_field_pos(void);
 
 #endif

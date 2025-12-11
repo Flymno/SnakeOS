@@ -29,6 +29,9 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 	gdt_init();
 	serial_init();
 
+	serial_writestring("Serial Initialised\n");
+	serial_writestring("GDT Initialised\n");
+
 	multiboot2_register_callback(framebuffer_multiboot2_init);
 	multiboot2_register_callback(memorymap_multiboot2_init);
 
@@ -62,26 +65,26 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 	serial_writestring("FRAMEBUFFER:\n");
 
 	serial_writestring("Framebuffer address: ");
-	serial_writehex((uint32_t)framebuffer.addr);
+	serial_writehex((uint32_t)framebuffer_get_address());
 	serial_newline();
 	serial_writestring("Framebuffer pitch: ");
-	serial_writehex(framebuffer.pitch);
+	serial_writehex(framebuffer_get_pitch());
 	serial_newline();
 	serial_writestring("Framebuffer width: ");
-	serial_writehex(framebuffer.width);
+	serial_writehex(framebuffer_get_width());
 	serial_newline();
 	serial_writestring("Framebuffer height: ");
-	serial_writehex(framebuffer.height);
+	serial_writehex(framebuffer_get_height());
 	serial_newline();
 	serial_writestring("Framebuffer bpp: ");
-	serial_writehex(framebuffer.bpp);
+	serial_writehex(framebuffer_get_bpp());
 	serial_newline();
 	serial_writestring("Framebuffer type: ");
-	serial_writehex(framebuffer.type);
+	serial_writehex(framebuffer_get_type());
 	serial_newline();
 	serial_newline();
 	
-	if ((uint32_t)framebuffer.addr > 0xffffffff) {
+	if ((uint32_t)framebuffer_get_address() > 0xffffffff) {
 		reboot();
 	}
 
@@ -132,7 +135,6 @@ void kernel_init(uint32_t multiboot2Magic, uint32_t multiboot2InfoAddr)
 		serial_writehex(allocatedPage2);
 		serial_newline();
 	}
-
 
 	uintptr_t allocatedPage3;
 	allocatedPage3 = palloc(50000, PALLOC_LOWMEM);

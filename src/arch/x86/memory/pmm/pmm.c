@@ -26,8 +26,8 @@ typedef struct
 
 typedef struct 
 {
-	uint32_t rowIndex;
-	uint8_t bitIndex;
+	size_t rowIndex;
+	size_t bitIndex;
 } BitmapLocation_t;
 
 /* ---------------- Internal State ---------------- */
@@ -37,11 +37,11 @@ static PMMState_t pmm;
 static BitmapLocation_t get_location(uint64_t pageIndex);
 static uint64_t page_to_address(uint64_t pageIndex);
 static uint64_t address_to_page(uint64_t address);
-static uint8_t bitmap_test(uint64_t pageIndex);
-static uint8_t bitmap_set(uint64_t pageIndex);
-static uint8_t bitmap_clear(uint64_t pageIndex);
+static size_t bitmap_test(uint64_t pageIndex);
+static size_t bitmap_set(uint64_t pageIndex);
+static size_t bitmap_clear(uint64_t pageIndex);
 static void bitmap_clear_region_callback(const MemoryRegion_t* region);
-static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex);
+static size_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex);
 static void low_reserve(void);
 static void bitmap_allocate(void);
 static void high_reserve(void);
@@ -53,15 +53,15 @@ static void high_reserve(void);
 *   -Converts a page index to a physical address
 * static uint64_t address_to_page(uint64_t address)
 *   -Converts a physical address to a page index
-* static uint8_t bitmap_test(uint64_t pageIndex)
+* static size_t bitmap_test(uint64_t pageIndex)
 *   -Checks if a page is allocated. Returns 0 if free, 1 if allocated
-* static uint8_t bitmap_set(uint64_t pageIndex)
+* static size_t bitmap_set(uint64_t pageIndex)
 *   -Marks a page as allocated. Returns 0 on success, 1 on failure
-* static uint8_t bitmap_clear(uint64_t pageIndex)
+* static size_t bitmap_clear(uint64_t pageIndex)
 *   -Marks a page as free. Returns 0 on success, 1 on failure
 * static void bitmap_clear_region_callback(const MemoryRegion_t* region)
 *   -Clears all pages in the bitmap corresponding to the given memory region
-* static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex)
+* static size_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex)
 *   -Finds a consecutive run of free pages of length pageCount between start and end.
 *   -Returns 0 on success (run found), 1 on failure (no run found). Writes start index of run to outIndex
 * static void low_reserve(void)
@@ -88,7 +88,7 @@ static uint64_t address_to_page(uint64_t address){
 	return pageIndex;
 }
 
-static uint8_t bitmap_test(uint64_t pageIndex) {
+static size_t bitmap_test(uint64_t pageIndex) {
 	BitmapLocation_t location = get_location(pageIndex);
 	uint32_t mask = (uint32_t) 1 << location.bitIndex;
 
@@ -99,7 +99,7 @@ static uint8_t bitmap_test(uint64_t pageIndex) {
 	}
 }
 
-static uint8_t bitmap_set(uint64_t pageIndex) {
+static size_t bitmap_set(uint64_t pageIndex) {
 	BitmapLocation_t location = get_location(pageIndex);
 	uint32_t mask = (uint32_t) 1 << location.bitIndex;
 
@@ -111,7 +111,7 @@ static uint8_t bitmap_set(uint64_t pageIndex) {
 	}
 }
 
-static uint8_t bitmap_clear(uint64_t pageIndex) {
+static size_t bitmap_clear(uint64_t pageIndex) {
 	BitmapLocation_t location = get_location(pageIndex);
 	uint32_t mask = (uint32_t) 1 << location.bitIndex;
 
@@ -131,7 +131,7 @@ static void bitmap_clear_region_callback(const MemoryRegion_t* region) {
 	}
 }
 
-static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex) {
+static size_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex) {
 	for (uint64_t pageIndex = start; pageIndex < end;) {
 		if (pageIndex + pageCount > end) {
 			return 1;
@@ -142,7 +142,7 @@ static uint8_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount,
 			continue;
 		}
 
-		uint8_t found = 1;
+		size_t found = 1;
 		for (uint64_t offset = 0; offset < pageCount; offset++) {
 			uint64_t current = pageIndex + offset;
             if (current >= end || bitmap_test(current)) {
@@ -219,7 +219,7 @@ void pmm_init(uint64_t addr) {
 }
 
 uint64_t palloc(uint64_t pageCount, PallocFlags_t flags) {
-	uint8_t status = 0;
+	size_t status = 0;
 	uint64_t foundIndex = 0;
 
 	if (pmm.bitmapLength == 0) {
@@ -247,11 +247,11 @@ uint64_t palloc(uint64_t pageCount, PallocFlags_t flags) {
 	}
 }
 
-uint8_t pfree(uint64_t addr, uint64_t pageCount) {
+size_t pfree(uint64_t addr, uint64_t pageCount) {
 	uint64_t startIndex = address_to_page(addr);
 	uint64_t endIndex = startIndex + pageCount;
 
-	uint8_t status = 0;
+	size_t status = 0;
 
 	if (endIndex > pmm.totalPages) {
 		endIndex = pmm.totalPages;

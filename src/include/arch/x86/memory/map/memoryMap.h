@@ -14,7 +14,7 @@ typedef struct
 {
 	uint64_t base;
 	uint64_t len;
-  uint8_t regionType;
+	size_t regionType;
 } MemoryRegion_t;
 
 typedef void (*memoryMap_region_callback_t)(const MemoryRegion_t *region);

@@ -29,8 +29,22 @@ typedef struct
   };
 } Multiboot2TagFramebuffer_t;
 
+typedef struct {
+    uint64_t addr;
+    size_t pitch;
+    size_t width;
+    size_t height;
+    size_t  bpp;
+    size_t  type;
+
+    uint8_t redPos;
+    uint8_t greenPos;
+    uint8_t bluePos;
+
+} Framebuffer_t;
+
 /* ---------------- Internal State ---------------- */
-Framebuffer_t framebuffer = {0};
+static Framebuffer_t framebuffer = {0};
 
 /* ---------------- Public API Implementation ---------------- 
 * void framebuffer_multiboot2_init(const void* tag)
@@ -54,12 +68,12 @@ void framebuffer_multiboot2_init(const void* tag) {
 	serial_writehex(framebufferTag->size);
 	serial_newline();
 
-	framebuffer.addr = framebufferTag->framebufferAddr;
-	framebuffer.pitch = framebufferTag->framebufferPitch;
-	framebuffer.width = framebufferTag-> framebufferWidth;
-	framebuffer.height = framebufferTag->framebufferHeight;
-	framebuffer.bpp = framebufferTag->framebufferBpp;
-	framebuffer.type = framebufferTag->framebufferType;
+	framebuffer.addr = (size_t)framebufferTag->framebufferAddr;
+	framebuffer.pitch = (size_t)framebufferTag->framebufferPitch;
+	framebuffer.width = (size_t)framebufferTag-> framebufferWidth;
+	framebuffer.height = (size_t)framebufferTag->framebufferHeight;
+	framebuffer.bpp = (size_t)framebufferTag->framebufferBpp;
+	framebuffer.type = (size_t)framebufferTag->framebufferType;
 
 	if (framebuffer.type == FRAMEBUFFER_RGB) {
 		framebuffer.redPos = framebufferTag->framebufferRedFieldPosition;
@@ -70,4 +84,40 @@ void framebuffer_multiboot2_init(const void* tag) {
 		framebuffer.greenPos = -1;
 		framebuffer.bluePos = -1;
 	}
+}
+
+uint64_t framebuffer_get_address(void) {
+	return framebuffer.addr;
+}
+
+size_t framebuffer_get_pitch(void) {
+	return framebuffer.pitch;
+}
+
+size_t framebuffer_get_width(void) {
+	return framebuffer.width;
+}
+
+size_t framebuffer_get_height(void) {
+	return framebuffer.height;
+}
+
+size_t framebuffer_get_bpp(void) {
+	return framebuffer.bpp;
+}
+
+size_t framebuffer_get_type(void) {
+	return framebuffer.type;
+}
+
+uint8_t framebuffer_get_red_field_pos(void) {
+	return framebuffer.redPos;
+}
+
+uint8_t framebuffer_get_green_field_pos(void) {
+	return framebuffer.greenPos;
+}
+
+uint8_t framebuffer_get_blue_field_pos(void) {
+	return framebuffer.bluePos;
 }

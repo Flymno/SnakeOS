@@ -27,10 +27,10 @@ typedef struct
 } Multiboot2TagMMap_t;
 
 /* ---------------- Internal State ---------------- */
-MemoryRegion_t memoryMap[MAX_MEMMAP_ENTRIES];
+static MemoryRegion_t memoryMap[MAX_MEMMAP_ENTRIES];
 size_t memoryMapSize = 0;
 
-MemoryRegion_t usableMemoryMap[MAX_MEMMAP_ENTRIES];
+static MemoryRegion_t usableMemoryMap[MAX_MEMMAP_ENTRIES];
 size_t usableMemoryMapSize = 0;
 
 /* ---------------- Internal Helper Prototypes ---------------- */

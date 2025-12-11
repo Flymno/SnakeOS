@@ -23,6 +23,6 @@ typedef uint8_t PallocFlags_t;
 */
 void pmm_init(uint64_t addr);
 uint64_t palloc(uint64_t pageCount, PallocFlags_t flags);
-uint8_t pfree(uint64_t addr, uint64_t pageCount);
+size_t pfree(uint64_t addr, uint64_t pageCount);
 
 #endif
