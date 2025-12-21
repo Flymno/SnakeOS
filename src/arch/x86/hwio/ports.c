@@ -1,12 +1,8 @@
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
-#include "arch/x86/hwio/ports.h"
+#include "arch/hwio/ports.h"
 
 /* ---------------- Internal Constants ---------------- */
-#define PIC1 0x20
-#define PIC2 0xA0
-#define ICW1 0x11
-#define ICW4 0x01
 
 /* ---------------- Public API Implementation ---------------- 
 * uint8_t inb(uint16_t port)

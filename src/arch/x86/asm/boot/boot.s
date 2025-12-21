@@ -55,7 +55,7 @@ _kStart:
 
     push %ebx                          /* Push Multiboot2 info address */
     push %eax                          /* Push Multiboot2 magic*/
-	call kernel_init                   /* Call kernel entry function */	
+	call arch_kinit                    /* Call kernel entry function */	
 	
 	cli                                /* Disable interrupts*/
 1: 	hlt                                /* Halt CPU */

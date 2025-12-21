@@ -1,5 +1,5 @@
-#ifndef GDTINIT_H_
-#define GDTINIT_H_
+#ifndef GDT_H_
+#define GDT_H_
 
 /* ---------------- Public API Prototypes ---------------- 
 * void gdt_init(void)

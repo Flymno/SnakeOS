@@ -1,11 +1,9 @@
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
-#include "arch/x86/boot/multiboot2.h"
-#include "drivers/x86/serial/serial.h"
-#include "arch/x86/memory/map/memoryMap.h"
-#include "arch/x86/graphics/framebuffer.h"
-#include "arch/x86/boot/multiboot2Consts.h"
 #include <stddef.h>
+#include <arch/boot/multiboot2.h>
+#include <arch/boot/multiboot2Consts.h>
+#include <drivers/console/console.h>
 
 /* ---------------- Internal Constants ---------------- */
 #define MAX_CALLBACKS 64
@@ -38,7 +36,7 @@ void multiboot2_register_callback(multiboot2_tag_callback_t cb) {
 	if (callbackCount < MAX_CALLBACKS) {
 		callbacks[callbackCount++] = cb;
 	} else {
-		serial_writestring("Too many Multiboot2 callbacks!\n");
+		kprint_string("Too many multiboot2 callbacks!!\n");
 	}
 }
 

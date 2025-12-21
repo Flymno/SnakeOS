@@ -1,5 +1,6 @@
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
+#include <arch/gdt/gdt.h>
 
 /* ---------------- Extern Symbols ---------------- */
 extern void reload_segment_registers(void);
