@@ -9,7 +9,6 @@
 #include "lib/string.h"
 
 /* ---------------- Internal Constants ---------------- */
-#define PAGE_SIZE 4096
 #define BITS_PER_ROW 32
 
 /* ---------------- Extern Symbols ---------------- */

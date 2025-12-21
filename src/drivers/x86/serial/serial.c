@@ -81,7 +81,7 @@ void serial_writedec(uint32_t val) {
             tmp[tmpPos++] = '0' + (val % 10);
             val /= 10;
         }
-        for (size_t i = tmpPos - 1; i >= 0; i--) {
+        for (int32_t i = tmpPos - 1; i >= 0; i--) {
             buf[pos++] = tmp[i];
         }
     }

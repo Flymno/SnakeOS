@@ -4,6 +4,7 @@
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
 
+
 /* ---------------- Public Constants ---------------- */
 #define MULTIBOOT2_MAGIC 0x36d76289
 

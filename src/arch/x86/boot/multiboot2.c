@@ -5,6 +5,7 @@
 #include "arch/x86/memory/map/memoryMap.h"
 #include "arch/x86/graphics/framebuffer.h"
 #include "arch/x86/boot/multiboot2Consts.h"
+#include <stddef.h>
 
 /* ---------------- Internal Constants ---------------- */
 #define MAX_CALLBACKS 64

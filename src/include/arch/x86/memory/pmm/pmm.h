@@ -3,10 +3,13 @@
 
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
+#include <stddef.h>
 
 /* ---------------- Public Constants ---------------- */
 #define PALLOC_ANY       0
 #define PALLOC_LOWMEM    1
+
+#define PAGE_SIZE 4096
 
 /* ---------------- Public Types ---------------- */
 typedef uint8_t PallocFlags_t;

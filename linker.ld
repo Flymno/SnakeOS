@@ -34,22 +34,26 @@ SECTIONS
 	_vStart = .;
 
 	_textStart = .;
+	_physTextStart = . - 0xC0000000;
 	.text ALIGN(4K) : AT (ADDR (.text) - 0xC0000000)
 	{
 		*(.text)
 	} :text
 	_textEnd = .;
 
-	_roStart = .;
 	.rodata ALIGN(4K) : AT (ADDR (.rodata) - 0xC0000000)
 	{
-		*(.rodata)
+		_roStart = .;
+		_physRoStart = . - 0xC0000000;
+		*(.rodata .rodata.*)
+		_roEnd = .;
 	} :ro
-	_roEnd = .;
  
-	_dataStart = .;
+	
 	.data ALIGN(4K) : AT (ADDR (.data) - 0xC0000000)
 	{
+		_dataStart = .;
+		_physDataStart = . - 0xC0000000;
 		*(.data)
 	} :data
 

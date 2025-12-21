@@ -3,6 +3,7 @@
 
 /* ---------------- Includes ---------------- */
 #include <stdint.h>
+#include <stddef.h>
 
 /* ---------------- Public Types ---------------- */
 typedef void (*multiboot2_tag_callback_t)(const void *tag);
