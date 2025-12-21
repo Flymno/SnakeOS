@@ -4,11 +4,13 @@ export PATH := $(HOME)/opt/cross/bin:/usr/bin:/bin:$(PATH)
 
 SRC_DIR := src
 OBJ_DIR := obj
-SRCS := $(shell find $(SRC_DIR) -name "*.c" -or -name "*.s")
-OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(filter %.c, $(SRCS))) \
-        $(patsubst $(SRC_DIR)/%.s, $(OBJ_DIR)/%.o, $(filter %.s, $(SRCS)))
+C_SRCS := $(shell find $(SRC_DIR) -name "*.c")
+ASM_SRCS := $(shell find $(SRC_DIR) -name "*.asm")
+OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(filter %.c, $(C_SRCS))) \
+        $(patsubst $(SRC_DIR)/%.asm, $(OBJ_DIR)/%.o, $(filter %.asm, $(ASM_SRCS)))
 
-AS := i686-elf-as
+AS := nasm
+ASFLAGS := -felf32
 CC := i686-elf-gcc
 CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra \
           -Isrc/include \
@@ -37,9 +39,9 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(DIR_DUP)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.asm
 	$(DIR_DUP)
-	$(AS) -o $@ $<
+	$(AS) $(ASFLAGS) -o $@ $<
 
 clean: 
 	$(RM) -r obj
