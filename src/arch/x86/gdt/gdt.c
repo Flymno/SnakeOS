@@ -1,5 +1,5 @@
 /* ---------------- Includes ---------------- */
-#include <stdint.h>
+#include <common/types.h>
 #include <arch/gdt/gdt.h>
 
 /* ---------------- Extern Symbols ---------------- */
@@ -7,15 +7,15 @@ extern void reload_segment_registers(void);
 
 /* ---------------- Internal Types ---------------- */
 typedef struct {
-	uint32_t base;
-	uint32_t limit;
-	uint8_t access;
-	uint8_t flags;
+	u32 base;
+	u32 limit;
+	u8 access;
+	u8 flags;
 } GDTEntry_t;
 
 typedef struct {
-	uint16_t limit;
-	uint32_t base;
+	u16 limit;
+	u32 base;
 }__attribute__((packed)) GDTPointer_t;
 
 /* ---------------- Internal State ---------------- */
@@ -24,16 +24,16 @@ GDTEntry_t GDTTable [3] = {
 	{0x0, 0xfffff, 0x9a, 0xc},
 	{0x0, 0xfffff, 0x92, 0xc}
 };
-uint8_t gdt_data[3 * 8] __attribute__((aligned(8)));
+u8 gdt_data[3 * 8] __attribute__((aligned(8)));
 
 /* ---------------- Internal Helper Prototypes ---------------- */
-void gdt_encode_entry(uint8_t *target, GDTEntry_t source);
+void gdt_encode_entry(u8* target, GDTEntry_t source);
 
 /* ---------------- Internal Helper Implementation ---------------- 
 * void gdt_encode_entry(uint8_t *target, GDTEntry_t source)
 *	-Encodes a GDTEntry into the correct format at target
 */
-void gdt_encode_entry(uint8_t *target, GDTEntry_t source) {
+void gdt_encode_entry(u8* target, GDTEntry_t source) {
     // Encode the limit
     target[0] = source.limit & 0xFF;
     target[1] = (source.limit >> 8) & 0xFF;
@@ -57,14 +57,14 @@ void gdt_encode_entry(uint8_t *target, GDTEntry_t source) {
 *	-Initialises the GDT. Calls gdtReload.s
 */
 void gdt_init(void) { 
-	for (int i = 0; i < 3; i++) {
+	for (u32 i = 0; i < 3; i++) {
 		gdt_encode_entry(&gdt_data[i * 8], GDTTable[i]);
 	}
 
 	GDTPointer_t gdtp;
 
 	gdtp.limit = (3 * 8) - 1;
-	gdtp.base = (uint32_t)gdt_data;
+	gdtp.base = (u32)gdt_data;
 
 	asm volatile ("lgdt %0" : : "m"(gdtp));
 

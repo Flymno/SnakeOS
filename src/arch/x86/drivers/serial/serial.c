@@ -1,6 +1,5 @@
 /* ---------------- Includes ---------------- */
-#include <stddef.h>
-#include <stdint.h>
+#include <common/types.h>
 #include <arch/hwio/ports.h>
 #include <hal/hal_console.h>
 

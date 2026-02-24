@@ -1,9 +1,8 @@
 /* ---------------- Includes ---------------- */
-#include <stdint.h>
-#include <stddef.h>
-#include "arch/x86/memory/map/memoryMap.h"
-#include "arch/x86/boot/multiboot2Consts.h"
-#include "drivers/x86/serial/serial.h"
+#include <common/types.h>
+#include <arch/memory/memoryMap.h>
+#include <arch/boot/multiboot2Consts.h>
+#include <arch/drivers/serial/serial.h>
 
 /* ---------------- Internal Constants ---------------- */
 #define MAX_MEMMAP_ENTRIES 64
@@ -11,18 +10,18 @@
 /* ---------------- Internal Types ---------------- */
 typedef struct 
 {
-  uint64_t addr;
-  uint64_t len;
-  uint32_t type;
-  uint32_t zero;
+  u64 addr;
+  u64 len;
+  u32 type;
+  u32 zero;
 } RawMemoryRegion_t;
 
 typedef struct
 {
-  uint32_t type;
-  uint32_t size;
-  uint32_t entrySize;
-  uint32_t entryVersion;
+  u32 type;
+  u32 size;
+  u32 entrySize;
+  u32 entryVersion;
   RawMemoryRegion_t entries[];  
 } Multiboot2TagMMap_t;
 
@@ -67,22 +66,11 @@ void memorymap_multiboot2_init(const void* tag) {
 	const Multiboot2TagMMap_t* mmap_tag = tag;
 
 	if(mmap_tag->type != TAG_MMAP) {
-		serial_writestring("Not a memory map tag! Tag: ");
-		serial_writehex(mmap_tag->type);
-		serial_newline();
 		return;
 	}
 
-	serial_writestring("Memory map tag found!\n");
-	serial_writestring("	Type: ");
-	serial_writehex(mmap_tag->type);
-	serial_newline();
-	serial_writestring("	Size: ");
-	serial_writehex(mmap_tag->size);
-	serial_newline();
-
-	const uint8_t* end = (const uint8_t*)mmap_tag + mmap_tag->size;
-	const uint8_t* entry_ptr = (const uint8_t*)mmap_tag->entries;
+	const u8* end = (const u8*)mmap_tag + mmap_tag->size;
+	const u8* entry_ptr = (const u8*)mmap_tag->entries;
 
 	while (entry_ptr < end) {
 		const RawMemoryRegion_t* entry = (const RawMemoryRegion_t*)entry_ptr;
@@ -112,56 +100,56 @@ void memorymap_foreach_usable(memoryMap_region_callback_t callback) {
 	}
 }
 
-uint64_t memorymap_get_max_addr(void) {
+u64 memorymap_get_max_addr(void) {
 	if (memoryMapSize == 0) return 0;
 
-	uint64_t highest = memoryMap[0].base + memoryMap[0].len;
+	u64 highest = memoryMap[0].base + memoryMap[0].len;
 	for (size_t i = 1; i < memoryMapSize; i++) {
-		uint64_t end = memoryMap[i].base + memoryMap[i].len;
+		u64 end = memoryMap[i].base + memoryMap[i].len;
 		if (end > highest) highest = end;
 	}
 	return highest;
 }
 
-void memorymap_dump(void) {
-	serial_writestring("Memory Map Location: ");
-	serial_writehex((uint32_t)memoryMap);
-	serial_newline();
-	serial_writestring("Memory Map Entries: ");
-	serial_newline();
-	for (size_t i = 0; i < memoryMapSize; i++) {
-		serial_writestring("Base High: ");
-		serial_writehex((uint32_t)(memoryMap[i].base >> 32));
-		serial_writestring("    Base Low: ");
-		serial_writehex((uint32_t)memoryMap[i].base);
-		serial_newline();
-		serial_writestring("Length High: ");
-		serial_writehex((uint32_t)(memoryMap[i].len >> 32));
-		serial_writestring("    Length Low: ");
-		serial_writehex((uint32_t)memoryMap[i].len);
-		serial_newline();
-		serial_writestring("Type: ");
-		serial_writehex((uint32_t)memoryMap[i].regionType);
-		serial_newline();
-	}
-}
+// void memorymap_dump(void) {
+// 	serial_writestring("Memory Map Location: ");
+// 	serial_writehex((u32)memoryMap);
+// 	serial_newline();
+// 	serial_writestring("Memory Map Entries: ");
+// 	serial_newline();
+// 	for (size_t i = 0; i < memoryMapSize; i++) {
+// 		serial_writestring("Base High: ");
+// 		serial_writehex((u32)(memoryMap[i].base >> 32));
+// 		serial_writestring("    Base Low: ");
+// 		serial_writehex((u32)memoryMap[i].base);
+// 		serial_newline();
+// 		serial_writestring("Length High: ");
+// 		serial_writehex((u32)(memoryMap[i].len >> 32));
+// 		serial_writestring("    Length Low: ");
+// 		serial_writehex((u32)memoryMap[i].len);
+// 		serial_newline();
+// 		serial_writestring("Type: ");
+// 		serial_writehex((u32)memoryMap[i].regionType);
+// 		serial_newline();
+// 	}
+// }
 
-void memorymap_dump_usable(void) {
-	serial_writestring("Usable Memory Map Location: ");
-	serial_writehex((uint32_t)usableMemoryMap);
-	serial_newline();
-	serial_writestring("Usable Memory Map Entries: ");
-	serial_newline();
-	for (size_t i = 0; i < usableMemoryMapSize; i++) {
-		serial_writestring("Base High: ");
-		serial_writehex((uint32_t)(usableMemoryMap[i].base >> 32));
-		serial_writestring("    Base Low: ");
-		serial_writehex((uint32_t)usableMemoryMap[i].base);
-		serial_newline();
-		serial_writestring("Length High: ");
-		serial_writehex((uint32_t)(usableMemoryMap[i].len >> 32));
-		serial_writestring("    Length Low: ");
-		serial_writehex((uint32_t)usableMemoryMap[i].len);
-		serial_newline();
-	}
-}
+// void memorymap_dump_usable(void) {
+// 	serial_writestring("Usable Memory Map Location: ");
+// 	serial_writehex((u32)usableMemoryMap);
+// 	serial_newline();
+// 	serial_writestring("Usable Memory Map Entries: ");
+// 	serial_newline();
+// 	for (size_t i = 0; i < usableMemoryMapSize; i++) {
+// 		serial_writestring("Base High: ");
+// 		serial_writehex((u32)(usableMemoryMap[i].base >> 32));
+// 		serial_writestring("    Base Low: ");
+// 		serial_writehex((u32)usableMemoryMap[i].base);
+// 		serial_newline();
+// 		serial_writestring("Length High: ");
+// 		serial_writehex((u32)(usableMemoryMap[i].len >> 32));
+// 		serial_writestring("    Length Low: ");
+// 		serial_writehex((u32)usableMemoryMap[i].len);
+// 		serial_newline();
+// 	}
+// }

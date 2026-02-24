@@ -1,7 +1,7 @@
-#include <stdarg.h>
-#include <stddef.h>
+#include <common/types.h>
 #include <hal/hal.h>
 #include <lib/string.h>
+#include <drivers/console.h>
 
 void kprint_char(char c) {
     if (HAL->console && HAL->console->put_char) {

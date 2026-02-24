@@ -1,9 +1,8 @@
 /* ---------------- Includes ---------------- */
-#include <stdint.h>
-#include <stddef.h>
+#include <common/types.h>
 #include <arch/boot/multiboot2.h>
 #include <arch/boot/multiboot2Consts.h>
-#include <drivers/console/console.h>
+#include <drivers/console.h>
 
 /* ---------------- Internal Constants ---------------- */
 #define MAX_CALLBACKS 64
@@ -11,8 +10,8 @@
 /* ---------------- Internal Types ---------------- */
 typedef struct
 {
-	uint32_t type;
-	uint32_t size;
+	u32 type;
+	u32 size;
 } Multiboot2Tag_t;
 
 /* ---------------- Internal State ---------------- */
@@ -27,7 +26,7 @@ size_t callbackCount;
 * void multiboot2_init(uint32_t multiboot2InfoAddr)
 *	-Parses Multiboot2 info and calls registered callbacks
 */
-size_t multiboot2_verify(uint32_t multiboot2Magic) {
+size_t multiboot2_verify(u32 multiboot2Magic) {
 	if (multiboot2Magic == MULTIBOOT2_MAGIC) { return 0;}
 	return 1;
 }
@@ -40,10 +39,10 @@ void multiboot2_register_callback(multiboot2_tag_callback_t cb) {
 	}
 }
 
-void multiboot2_init(uint32_t multiboot2InfoAddr)  {
+void multiboot2_init(u32 multiboot2InfoAddr)  {
 	Multiboot2Tag_t *tag;
 	
-	for (tag = (Multiboot2Tag_t *) (multiboot2InfoAddr + 8); tag->type != TAG_END; tag = (Multiboot2Tag_t *) ((uint8_t *) tag + ((tag->size + 7) & ~7))) {
+	for (tag = (Multiboot2Tag_t *) (multiboot2InfoAddr + 8); tag->type != TAG_END; tag = (Multiboot2Tag_t *) ((u8*) tag + ((tag->size + 7) & ~7))) {
 		for (size_t i = 0; i < callbackCount; i++) {
 			callbacks[i](tag);
 		}

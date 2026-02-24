@@ -1,10 +1,6 @@
 #ifndef MULTIBOOT2_CONSTS_H_
 #define MULTIBOOT2_CONSTS_H_
 
-/* ---------------- Includes ---------------- */
-#include <stdint.h>
-
-
 /* ---------------- Public Constants ---------------- */
 #define MULTIBOOT2_MAGIC 0x36d76289
 

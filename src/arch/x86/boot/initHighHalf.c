@@ -1,5 +1,5 @@
 /* ---------------- Includes ---------------- */
-#include <stdint.h>
+#include <common/types.h>
 
 /* ---------------- Internal Constants ---------------- */
 #define PDE_PRESENT 0x1
@@ -8,14 +8,14 @@
 
 /* ---------------- Internal State ---------------- */
 __attribute__((section(".bootstrap.bss"), aligned(4096)))
-uint32_t earlyPageDirectory[1024];
+u32 earlyPageDirectory[1024];
 
 /* ---------------- Public API Implementation ---------------- 
 * uint32_t* init_early_paging()
 *   -Sets up the initial corase page directories to jump to a high-half kernel
 */
 __attribute__((section(".bootstrap.text")))
-uint32_t* init_early_paging() {
+u32* init_early_paging() {
     // Identity map 8M
     earlyPageDirectory[0] = 0x00000000 | PDE_PRESENT | PDE_RW | PDE_PS;
     earlyPageDirectory[1] = 0x00400000 | PDE_PRESENT | PDE_RW | PDE_PS;

@@ -2,9 +2,8 @@
 #define MEMORY_MAP_H_
 
 /* ---------------- Includes ---------------- */
-#include <stdint.h>
-#include <stddef.h>
-#include "arch/x86/boot/multiboot2Consts.h"
+#include <common/types.h>
+#include <arch/boot/multiboot2Consts.h>
 
 /* ---------------- Public Constants ---------------- */
 #define MAX_MEMMAP_ENTRIES 64
@@ -12,8 +11,8 @@
 /* ---------------- Public Types ---------------- */
 typedef struct
 {
-	uint64_t base;
-	uint64_t len;
+	u64 base;
+	u64 len;
 	size_t regionType;
 } MemoryRegion_t;
 
@@ -36,7 +35,7 @@ typedef void (*memoryMap_region_callback_t)(const MemoryRegion_t *region);
 void memorymap_multiboot2_init(const void* tag);
 void memorymap_foreach_raw(memoryMap_region_callback_t callback);
 void memorymap_foreach_usable(memoryMap_region_callback_t callback);
-uint64_t memorymap_get_max_addr(void);
+u64 memorymap_get_max_addr(void);
 void memorymap_dump(void);
 void memorymap_dump_usable(void);
 
