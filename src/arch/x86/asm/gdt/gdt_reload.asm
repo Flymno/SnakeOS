@@ -10,7 +10,10 @@ reload_segment_registers:
     mov gs, ax               ;Reload GS
     mov ss, ax               ;Reload SS
 
-	jmp 0x08:flush           ;Far jump to reload CS with kernel code segment
+    push 0x08
+    lea rax, [rel flush]
+    push rax
+	retf                     ;Far jump to reload CS with kernel code segment
 
 flush:
 	ret                      ;Return to caller

@@ -1,7 +1,7 @@
 /* ---------------- Includes ---------------- */
 #include <common/types.h>
 #include <arch/boot/multiboot2.h>
-#include <arch/boot/multiboot2Consts.h>
+#include <arch/boot/multiboot2_consts.h>
 #include <drivers/console.h>
 
 /* ---------------- Internal Constants ---------------- */

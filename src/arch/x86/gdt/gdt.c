@@ -19,12 +19,14 @@ typedef struct {
 }__attribute__((packed)) GDTPointer_t;
 
 /* ---------------- Internal State ---------------- */
-GDTEntry_t GDTTable [3] = {
-	{0x0, 0x0, 0x0, 0x0},
-	{0x0, 0xfffff, 0x9a, 0xc},
-	{0x0, 0xfffff, 0x92, 0xc}
+GDTEntry_t GDTTable [5] = {
+	{0x0, 0x0, 0x0, 0x0},         // NULL Segment
+	{0x0, 0xFFFFF, 0x9A, 0xA},    // Kernel Code Segment
+	{0x0, 0xFFFFF, 0x92, 0xC},    // Kernel Data Segment
+	{0x0, 0xFFFFF, 0xFA, 0xA},    // User Code Segment
+	{0x0, 0xfffff, 0xF2, 0xC}     // User Data Segment
 };
-u8 gdt_data[3 * 8] __attribute__((aligned(8)));
+u8 gdt_data[5 * 8] __attribute__((aligned(8)));
 
 /* ---------------- Internal Helper Prototypes ---------------- */
 void gdt_encode_entry(u8* target, GDTEntry_t source);
@@ -57,13 +59,13 @@ void gdt_encode_entry(u8* target, GDTEntry_t source) {
 *	-Initialises the GDT. Calls gdtReload.s
 */
 void gdt_init(void) { 
-	for (u32 i = 0; i < 3; i++) {
+	for (u32 i = 0; i < 5; i++) {
 		gdt_encode_entry(&gdt_data[i * 8], GDTTable[i]);
 	}
 
 	GDTPointer_t gdtp;
 
-	gdtp.limit = (3 * 8) - 1;
+	gdtp.limit = (5 * 8) - 1;
 	gdtp.base = (u32)gdt_data;
 
 	asm volatile ("lgdt %0" : : "m"(gdtp));

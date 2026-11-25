@@ -1,12 +1,10 @@
 /* ---------------- Includes ---------------- */
-#include <stdint.h>
-#include <stddef.h>
-#include "arch/x86/memory/pmm/pmm.h"
-#include "arch/x86/boot/multiboot2.h"
-#include "arch/x86/memory/map/memoryMap.h"
-#include "arch/x86/memory/util/memUtil.h"
-#include "drivers/x86/serial/serial.h"
-#include "lib/string.h"
+#include <common/types.h>
+#include <common/memory_defs.h>
+#include <memory/map.h>
+#include <memory/pmm.h>
+#include <lib/string.h>
+#include <lib/stdio.h>
 
 /* ---------------- Internal Constants ---------------- */
 #define BITS_PER_ROW 32
@@ -17,10 +15,10 @@ extern char _physStart[], _physEnd[];
 /* ---------------- Internal Types ---------------- */
 typedef struct
 {
-	uint32_t* bitmap;
+	u32* bitmap;
 	size_t bitmapLength;
-	uint64_t totalPages;
-	uint64_t lastAllocatedIndex;
+	u64 totalPages;
+	u64 lastAllocatedIndex;
 } PMMState_t;
 
 typedef struct 
@@ -33,14 +31,14 @@ typedef struct
 static PMMState_t pmm;
 
 /* ---------------- Internal Helper Prototypes ---------------- */
-static BitmapLocation_t get_location(uint64_t pageIndex);
-static uint64_t page_to_address(uint64_t pageIndex);
-static uint64_t address_to_page(uint64_t address);
-static size_t bitmap_test(uint64_t pageIndex);
-static size_t bitmap_set(uint64_t pageIndex);
-static size_t bitmap_clear(uint64_t pageIndex);
+static BitmapLocation_t get_location(u64 pageIndex);
+static u64 page_to_address(u64 pageIndex);
+static u64 address_to_page(u64 address);
+static size_t bitmap_test(u64 pageIndex);
+static size_t bitmap_set(u64 pageIndex);
+static size_t bitmap_clear(u64 pageIndex);
 static void bitmap_clear_region_callback(const MemoryRegion_t* region);
-static size_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex);
+static size_t bitmap_find_run(u64 start, u64 end, u64 pageCount, u64* outIndex);
 static void low_reserve(void);
 static void bitmap_allocate(void);
 static void high_reserve(void);
@@ -70,26 +68,26 @@ static void high_reserve(void);
 * static void high_reserve(void)
 *	-Reserves all pages above 4GB as they are not accessible in protected mode
 */
-static BitmapLocation_t get_location(uint64_t pageIndex) {
+static BitmapLocation_t get_location(u64 pageIndex) {
 	BitmapLocation_t location;
 	location.rowIndex = pageIndex / BITS_PER_ROW;
 	location.bitIndex = pageIndex % BITS_PER_ROW;
 	return location;
 }
 
-static uint64_t page_to_address(uint64_t pageIndex){
-	uint64_t address = (pageIndex * PAGE_SIZE);
+static u64 page_to_address(u64 pageIndex){
+	u64 address = (pageIndex * PAGE_SIZE);
 	return address;
 }
 
-static uint64_t address_to_page(uint64_t address){
-	uint64_t pageIndex = (address / PAGE_SIZE);
+static u64 address_to_page(u64 address){
+	u64 pageIndex = (address / PAGE_SIZE);
 	return pageIndex;
 }
 
-static size_t bitmap_test(uint64_t pageIndex) {
+static size_t bitmap_test(u64 pageIndex) {
 	BitmapLocation_t location = get_location(pageIndex);
-	uint32_t mask = (uint32_t) 1 << location.bitIndex;
+	u32 mask = (u32) 1 << location.bitIndex;
 
 	if ((pmm.bitmap[location.rowIndex] & mask) == 0 ){
 		return 0;
@@ -98,9 +96,9 @@ static size_t bitmap_test(uint64_t pageIndex) {
 	}
 }
 
-static size_t bitmap_set(uint64_t pageIndex) {
+static size_t bitmap_set(u64 pageIndex) {
 	BitmapLocation_t location = get_location(pageIndex);
-	uint32_t mask = (uint32_t) 1 << location.bitIndex;
+	u32 mask = (u32) 1 << location.bitIndex;
 
 	if (bitmap_test(pageIndex) == 0) {
 		pmm.bitmap[location.rowIndex] |= mask;
@@ -110,9 +108,9 @@ static size_t bitmap_set(uint64_t pageIndex) {
 	}
 }
 
-static size_t bitmap_clear(uint64_t pageIndex) {
+static size_t bitmap_clear(u64 pageIndex) {
 	BitmapLocation_t location = get_location(pageIndex);
-	uint32_t mask = (uint32_t) 1 << location.bitIndex;
+	u32 mask = (u32) 1 << location.bitIndex;
 
 	if (bitmap_test(pageIndex) == 1) {
 		pmm.bitmap[location.rowIndex] &= ~mask;
@@ -123,18 +121,23 @@ static size_t bitmap_clear(uint64_t pageIndex) {
 }
 
 static void bitmap_clear_region_callback(const MemoryRegion_t* region) {
-	uint64_t startPage = region->base / PAGE_SIZE;
-	uint64_t pageCount = region->len / PAGE_SIZE;
-	for (uint64_t pageIndex = startPage; pageIndex < startPage + pageCount; pageIndex++) {
+	u64 startPage = region->baseAddr / PAGE_SIZE;
+	u64 pageCount = region->regionLen / PAGE_SIZE;
+	for (u64 pageIndex = startPage; pageIndex < startPage + pageCount; pageIndex++) {
 		bitmap_clear(pageIndex);
 	}
 }
 
-static size_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, uint64_t* outIndex) {
-	for (uint64_t pageIndex = start; pageIndex < end;) {
+static size_t bitmap_find_run(u64 start, u64 end, u64 pageCount, u64* outIndex) {
+	for (u64 pageIndex = start; pageIndex < end;) {
 		if (pageIndex + pageCount > end) {
 			return 1;
 		}
+
+		if ((pageIndex % 32 == 0) && (pmm.bitmap[pageIndex / 32] == 0xFFFFFFFF)) {
+            pageIndex += 32;
+            continue;
+        }
 
 		if (bitmap_test(pageIndex)) {
 			pageIndex ++;
@@ -142,8 +145,9 @@ static size_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, 
 		}
 
 		size_t found = 1;
-		for (uint64_t offset = 0; offset < pageCount; offset++) {
-			uint64_t current = pageIndex + offset;
+		for (u64 offset = 0; offset < pageCount; offset++) {
+			u64 current = pageIndex + offset;
+
             if (current >= end || bitmap_test(current)) {
                 found = 0;
 				pageIndex = current + 1;
@@ -162,25 +166,25 @@ static size_t bitmap_find_run(uint64_t start, uint64_t end, uint64_t pageCount, 
 
 /* -- Kernel/Bitmap Reservation -- */
 static void low_reserve(void) {
-	uint64_t kernelEndPage = (uint64_t)((uintptr_t)_physEnd + PAGE_SIZE - 1) / PAGE_SIZE;
-	for (uint64_t pageIndex = 0; pageIndex < kernelEndPage; pageIndex ++) {
+	u64 kernelEndPage = (u64)((uintptr_t)_physEnd + PAGE_SIZE - 1) / PAGE_SIZE;
+	for (u64 pageIndex = 0; pageIndex < kernelEndPage; pageIndex ++) {
 		bitmap_set(pageIndex);
 	}
 }
 
 static void bitmap_allocate(void) {
-	uint64_t bitmapStartPage = (uint64_t)v2p((uintptr_t)pmm.bitmap) / PAGE_SIZE;
-	size_t bitmapMemSize = ((pmm.bitmapLength * sizeof(uint32_t)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-	uint64_t bitmapEndPage = (bitmapStartPage + bitmapMemSize / PAGE_SIZE);
-	for (uint64_t pageIndex = bitmapStartPage; pageIndex < bitmapEndPage; pageIndex ++) {
+	u64 bitmapStartPage = (u64)v2p((uintptr_t)pmm.bitmap) / PAGE_SIZE;
+	size_t bitmapMemSize = ((pmm.bitmapLength * sizeof(u32)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+	u64 bitmapEndPage = (bitmapStartPage + bitmapMemSize / PAGE_SIZE);
+	for (u64 pageIndex = bitmapStartPage; pageIndex < bitmapEndPage; pageIndex ++) {
 		bitmap_set(pageIndex);
 	}
 }
 
 static void high_reserve(void) {
-	uint64_t limitBoundaryPage = ((uint64_t)0x100000000ULL) / PAGE_SIZE;
+	u64 limitBoundaryPage = ((u64)0x100000000ULL) / PAGE_SIZE;
 	if (pmm.totalPages > limitBoundaryPage) {
-		for (uint64_t pageIndex = limitBoundaryPage; pageIndex < pmm.totalPages; pageIndex ++) {
+		for (u64 pageIndex = limitBoundaryPage; pageIndex < pmm.totalPages; pageIndex ++) {
 			bitmap_set(pageIndex);
 		}
 	}
@@ -196,10 +200,10 @@ static void high_reserve(void) {
 *	-Frees pageCount pages starting at addr
 *	-Returns 0 if all pages were freed successfully. Returns 1 if any page failed
 */
-void pmm_init(uint64_t addr) {
-	uint64_t totalMem = (uint64_t)memorymap_get_max_addr();
+void pmm_init(u64 addr) {
+	u64 totalMem = (u64)memory_map_get_max_addr_usable();
 
-	pmm.bitmap = (uint32_t*)((uintptr_t)((addr + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)));
+	pmm.bitmap = (u32*)((uintptr_t)((addr + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)));
 	pmm.totalPages = totalMem / PAGE_SIZE;
 	pmm.bitmapLength = ((pmm.totalPages + BITS_PER_ROW - 1) / BITS_PER_ROW);
 
@@ -209,20 +213,23 @@ void pmm_init(uint64_t addr) {
 
 	memset(pmm.bitmap, 0xff, pmm.bitmapLength * sizeof(uint32_t));
 
-	memorymap_foreach_usable(bitmap_clear_region_callback);
+	memory_map_foreach_usable(bitmap_clear_region_callback);
 	low_reserve();
 	bitmap_allocate();
 	high_reserve();
+	bitmap_set(address_to_page(0x0));
+
+	printf("> Bitmap Initialised! Size: %#08x\n", ((pmm.bitmapLength * sizeof(u32)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1));
 
 	pmm.lastAllocatedIndex = address_to_page(0x00800000);
 }
 
-uint64_t palloc(uint64_t pageCount, PallocFlags_t flags) {
+u64 palloc(u64 pageCount, PallocFlags_t flags) {
 	size_t status = 0;
-	uint64_t foundIndex = 0;
+	u64 foundIndex = 0;
 
 	if (pmm.bitmapLength == 0) {
-		serial_writestring("NO MEMORY!! PANIC!!\n");
+		printf("NO MEMORY!! PANIC!!\n");
 	} else if (flags == PALLOC_ANY) {
 		status = bitmap_find_run(pmm.lastAllocatedIndex, pmm.totalPages, pageCount, &foundIndex);
 		if (status == 1) {
@@ -233,8 +240,8 @@ uint64_t palloc(uint64_t pageCount, PallocFlags_t flags) {
 	}
 
 	if (status == 0) {
-		uint64_t endIndex = foundIndex + pageCount;
-		for (uint64_t pageIndex = foundIndex; pageIndex < endIndex; pageIndex++) {
+		u64 endIndex = foundIndex + pageCount;
+		for (u64 pageIndex = foundIndex; pageIndex < endIndex; pageIndex++) {
 			bitmap_set(pageIndex);
 		}
 
@@ -242,13 +249,13 @@ uint64_t palloc(uint64_t pageCount, PallocFlags_t flags) {
 
 		return page_to_address(foundIndex);
 	} else {
-		return UINT64_MAX;
+		return 0;
 	}
 }
 
-size_t pfree(uint64_t addr, uint64_t pageCount) {
-	uint64_t startIndex = address_to_page(addr);
-	uint64_t endIndex = startIndex + pageCount;
+size_t pfree(u64 addr, u64 pageCount) {
+	u64 startIndex = address_to_page(addr);
+	u64 endIndex = startIndex + pageCount;
 
 	size_t status = 0;
 

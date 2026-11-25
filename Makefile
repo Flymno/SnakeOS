@@ -4,20 +4,21 @@ export PATH := $(HOME)/opt/cross/bin:/usr/bin:/bin:$(PATH)
 
 SRC_DIR := src
 OBJ_DIR := obj
-C_SRCS := $(shell find $(SRC_DIR) -name "*.c")
+
+C_SRCS   := $(shell find $(SRC_DIR) -name "*.c")
 ASM_SRCS := $(shell find $(SRC_DIR) -name "*.asm")
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(filter %.c, $(C_SRCS))) \
         $(patsubst $(SRC_DIR)/%.asm, $(OBJ_DIR)/%.o, $(filter %.asm, $(ASM_SRCS)))
 
 AS := nasm
-ASFLAGS := -felf32
-CC := i686-elf-gcc
-CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra \
-          -Isrc/include \
+ASFLAGSKERNEL := -felf64
+CC := x86_64-elf-gcc
+CFLAGSKERNEL := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -m64 -mcmodel=kernel -mno-red-zone \
           -Isrc/kernel/include \
-          -Isrc/arch/x86/include
-LINKER := i686-elf-gcc
-LDFLAGS := -ffreestanding -T linker.ld -O2 -nostdlib -lgcc \
+          -Isrc/arch/x86/include \
+		  -DARCH_X86_64
+LINKER := x86_64-elf-gcc
+LDFLAG := -ffreestanding -T linker.ld -O2 -nostdlib -lgcc -z max-page-size=0x1000 \
           -Isrc/include \
           -Isrc/kernel/include \
           -Isrc/arch/x86/include
@@ -33,15 +34,15 @@ build/SnakeOS.iso: SnakeOS.elf
 	grub-mkrescue -o build/SnakeOS.iso build/iso
 
 SnakeOS.elf: $(OBJS)
-	$(LINKER) $(LDFLAGS) -o $@ $^
+	$(LINKER) $(LDFLAG) -o $@ $^
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(DIR_DUP)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGSKERNEL) -c -o $@ $<
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.asm
 	$(DIR_DUP)
-	$(AS) $(ASFLAGS) -o $@ $<
+	$(AS) $(ASFLAGSKERNEL) -o $@ $<
 
 clean: 
 	$(RM) -r obj
