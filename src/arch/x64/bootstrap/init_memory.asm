@@ -9,7 +9,7 @@ PAGE_PRESENT equ 1 << 0
 PAGE_WRITABLE equ 1 << 1
 PAGE_HUGE equ 1 << 7
 
-section .bootstrap.bss noexec write alloc
+section .bootstrap.bss nobits noexec write alloc
 align 16
 
 earlyPML4: resq 512

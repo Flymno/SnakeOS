@@ -1,7 +1,6 @@
 /* ---------------- Includes ---------------- */
 #include <common/types.h>
 #include <memory/map.h>
-#include <arch/drivers/serial/serial.h>
 
 /* ---------------- Internal Constants ---------------- */
 #define MAX_MEMMAP_ENTRIES 64

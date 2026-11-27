@@ -42,7 +42,7 @@ void multiboot2_register_callback(multiboot2_tag_callback_t cb) {
 void multiboot2_init(u32 multiboot2InfoAddr)  {
 	Multiboot2Tag_t *tag;
 	
-	for (tag = (Multiboot2Tag_t *) (multiboot2InfoAddr + 8); tag->type != TAG_END; tag = (Multiboot2Tag_t *) ((u8*) tag + ((tag->size + 7) & ~7))) {
+	for (tag = (Multiboot2Tag_t *)(uintptr_t)(multiboot2InfoAddr + 8); tag->type != TAG_END; tag = (Multiboot2Tag_t *) ((u8*) tag + ((tag->size + 7) & ~7))) {
 		for (size_t i = 0; i < callbackCount; i++) {
 			callbacks[i](tag);
 		}

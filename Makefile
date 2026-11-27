@@ -13,7 +13,7 @@ OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(filter %.c, $(C_SRCS))) \
 AS := nasm
 ASFLAGSKERNEL := -felf64
 CC := x86_64-elf-gcc
-CFLAGSKERNEL := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -m64 -mcmodel=kernel -mno-red-zone \
+CFLAGSKERNEL := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Wpedantic -m64 -mcmodel=kernel -mno-red-zone \
           -Isrc/kernel/include \
           -Isrc/arch/x64/include \
 		  -DARCH_X86_64

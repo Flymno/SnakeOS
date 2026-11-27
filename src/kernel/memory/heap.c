@@ -11,11 +11,11 @@ size_t sizes[9] = {8, 16, 32, 64, 128, 256, 512, 1024, 2048};
 void kfree(void* obj);
 
 typedef struct BigAllocation_s BigAllocation_t;
-typedef struct BigAllocation_s {
+struct BigAllocation_s {
     uintptr_t baseAddr;
     size_t pageCount;
     BigAllocation_t* next;
-} BigAllocation_t;
+};
 
 BigAllocation_t* bigAllocationList;
 
@@ -24,7 +24,7 @@ static s32 get_bucket_index(size_t objSize) {
         if (objSize <= sizes[i]) return i;
     }
     return -1;
-};
+}
 
 void kfree(void* obj);
 

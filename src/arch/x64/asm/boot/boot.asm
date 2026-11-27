@@ -2,7 +2,7 @@
 
 global long_mode
 
-section .bootstrap.bss noexec write alloc
+section .bootstrap.bss nobits noexec write alloc
 align 16
 
 mb2_magic: resd 1
