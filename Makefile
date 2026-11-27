@@ -15,13 +15,13 @@ ASFLAGSKERNEL := -felf64
 CC := x86_64-elf-gcc
 CFLAGSKERNEL := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -m64 -mcmodel=kernel -mno-red-zone \
           -Isrc/kernel/include \
-          -Isrc/arch/x86/include \
+          -Isrc/arch/x64/include \
 		  -DARCH_X86_64
 LINKER := x86_64-elf-gcc
 LDFLAG := -ffreestanding -T linker.ld -O2 -nostdlib -lgcc -z max-page-size=0x1000 \
           -Isrc/include \
           -Isrc/kernel/include \
-          -Isrc/arch/x86/include
+          -Isrc/arch/x64/include
 
 RM := rm -f
 DIR_DUP = mkdir -p $(@D)
