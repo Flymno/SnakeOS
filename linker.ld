@@ -1,7 +1,8 @@
 /* The bootloader will look at this image and start execution at the symbol
    designated as the entry point. */
 ENTRY(_start)
- 
+OUTPUT_FORMAT("elf64-x86-64")
+OUTPUT_ARCH(i386:x86-64)
 /* Tell where the various sections of the object files will be put in the final
    kernel image. */
 
@@ -28,43 +29,48 @@ SECTIONS
 	{
 		*(.bootstrap.bss)
 	} :bootdata
+
+	.bootstrap.data BLOCK(4K) : ALIGN(4K)
+	{
+		*(.bootstrap.data)
+	} :bootdata
 	
-	. += 0xC0000000;
-	_physStart = . - 0xC0000000;
+	. += 0xFFFFFFFF80000000;
+	_physStart = . - 0xFFFFFFFF80000000;
 	_vStart = .;
 
 	_textStart = .;
-	_physTextStart = . - 0xC0000000;
-	.text ALIGN(4K) : AT (ADDR (.text) - 0xC0000000)
+	_physTextStart = . - 0xFFFFFFFF80000000;
+	.text ALIGN(4K) : AT (ADDR (.text) - 0xFFFFFFFF80000000)
 	{
 		*(.text)
 	} :text
 	_textEnd = .;
 
-	.rodata ALIGN(4K) : AT (ADDR (.rodata) - 0xC0000000)
+	.rodata ALIGN(4K) : AT (ADDR (.rodata) - 0xFFFFFFFF80000000)
 	{
 		_roStart = .;
-		_physRoStart = . - 0xC0000000;
+		_physRoStart = . - 0xFFFFFFFF80000000;
 		*(.rodata .rodata.*)
 		_roEnd = .;
 	} :ro
  
 	
-	.data ALIGN(4K) : AT (ADDR (.data) - 0xC0000000)
+	.data ALIGN(4K) : AT (ADDR (.data) - 0xFFFFFFFF80000000)
 	{
 		_dataStart = .;
-		_physDataStart = . - 0xC0000000;
+		_physDataStart = . - 0xFFFFFFFF80000000;
 		*(.data)
 	} :data
 
-	.bss ALIGN(4K) : AT (ADDR (.bss) - 0xC0000000)
+	.bss ALIGN(4K) : AT (ADDR (.bss) - 0xFFFFFFFF80000000)
 	{
 		*(COMMON)
 		*(.bss)
 	} :data
 	_dataEnd = .;
 
-	_physEnd = . - 0xC0000000;
+	_physEnd = . - 0xFFFFFFFF80000000;
 	_vEnd = .;
  
 	/* The compiler may produce other sections, by default it will put them in
