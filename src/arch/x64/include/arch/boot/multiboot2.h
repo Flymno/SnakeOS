@@ -15,7 +15,7 @@ typedef void (*multiboot2_tag_callback_t)(const void *tag);
 * void multiboot2_init(uint32_t multiboot2InfoAddr)
 *	-Parses Multiboot2 info and calls registered callbacks
 */
-size_t multiboot2_verify(u32 multiboot2Magic);
+status_t multiboot2_verify(u32 multiboot2Magic);
 void multiboot2_register_callback(multiboot2_tag_callback_t callback);
 void multiboot2_init(u32 multiboot2InfoAddr);
 

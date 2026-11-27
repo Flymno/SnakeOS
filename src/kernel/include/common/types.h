@@ -22,4 +22,6 @@ typedef s32 status_t;
 #define SUCCESS 0
 #define FAILURE -1
 
+typedef uintptr_t hal_arg_t;
+
 #endif

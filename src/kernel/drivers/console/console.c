@@ -4,13 +4,13 @@
 #include <drivers/console.h>
 
 void kprint_char(char c) {
-    if (HAL->console && HAL->console->put_char) {
-        HAL->console->put_char(c);
+    if (HAL->active_console && HAL->active_console->control) {
+        HAL->active_console->control(CMD_PUT, (hal_arg_t)c, 0);
     }
 }
 
 void kprint_string(const char* s) {
-    for (size_t i = 0; s[i] != '\0'; i++) {
-        kprint_char(s[i]);
+    if (HAL->active_console && HAL->active_console->control) {
+        HAL->active_console->control(CMD_WRITE, (hal_arg_t)s, 0);
     }
 }

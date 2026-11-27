@@ -1,5 +1,4 @@
 #include <common/types.h>
-#include <arch/gdt/gdt.h>
 #include <arch/drivers/serial/serial.h>
 #include <hal/hal.h>
 #include <drivers/console.h>
@@ -13,10 +12,7 @@
 
 extern char _physStart[], _physEnd[], _vStart[], _vEnd[];
 
-static HAL_t gHAL;
-HAL_t* HAL = &gHAL;
-
-static void dump_callback(const MemoryRegion_t* region) {
+static void memory_map_dump_callback(const MemoryRegion_t* region) {
     const char* status = (region->type == MEMORY_REGION_USABLE) ? "USABLE" : "RESERVED";
     
     printf("%#08x%08x | %#08x%08x | %s\n", 
@@ -30,7 +26,7 @@ static void memory_map_dump(void) {
     printf("Base Address         | Length               | Status\n");
     printf("------------------------------------------------------------\n");
     
-    memory_map_foreach_raw(dump_callback);
+    memory_map_foreach_raw(memory_map_dump_callback);
     
     u64 max_addr = memory_map_get_max_addr();
     printf("------------------------------------------------------------\n");
@@ -39,33 +35,43 @@ static void memory_map_dump(void) {
            (u32)(max_addr / 1024 / 1024));
 }
 
+static bool hal_device_dump_callback(const HALDevice_t* device) {
+    CmdIdentResponse_t ident = {0};
+    if (device->control(CMD_IDENT, (hal_arg_t)0, (hal_arg_t)&ident) == FAILURE) {
+        return false;
+    }
+    printf("Found Device: %s\n", ident.name);
+    return false;
+}
+
+static void hal_device_dump(void) {
+    hal_foreach_device(hal_device_dump_callback);
+}
+
 void arch_kinit(u32 multiboot2Magic, u32 multiboot2InfoAddr) {
-    // gdt_init();
-
-    HAL->console = x86_serial_get_console();
-    HAL->console->init();
-
-	printf("\n---------- Welcome To SnakeOS ----------\n");
-	printf("> Kernel Start Address: %#08x\n", (u32)_vStart);
-	printf("> Initialising Multiboot 2...\n");
+    bool mb_valid = false;
+    if (multiboot2_verify(multiboot2Magic) == SUCCESS) mb_valid = true;
 
 	multiboot2_register_callback(memory_map_multiboot2_init);
 
-    if (multiboot2_verify(multiboot2Magic) == 0) {
-		printf("> Multiboot 2 successful! Magic: %#08x\n", multiboot2Magic);
-		multiboot2_init(multiboot2InfoAddr);
-	} else {
-		printf("> FATAL! Multiboot 2 failed! Magic: %#08x\n", multiboot2Magic);
-		return;
-	}
+    if (mb_valid) multiboot2_init(multiboot2InfoAddr);
 
 	pmm_init((uintptr_t)_vEnd);
 
-    char* stringTest = kcalloc(sizeof(char), 15);
-    strcpy(stringTest, "Hello, World!\n");
-    printf("%s", stringTest);
-    kfree(stringTest);
-    printf("%s", stringTest);
+    hal_register_device(serial_hal_registration);
+    HAL_init();
+
+    printf("\n---------- Welcome To SnakeOS ----------\n");
+	printf("> Kernel Start Address: %#08x%08x\n", (u32)((uintptr_t)_vStart >> 32), (u32)(_vStart));
+	printf("> Initialising Multiboot 2...\n");
+
+    if (mb_valid) {
+        printf("> Multiboot 2 successful! Magic: %#08x\n", multiboot2Magic);
+    } else {
+        printf("> FATAL! Multiboot 2 failed! Magic: %#08x\n", multiboot2Magic);
+		return;
+    }
 
 	memory_map_dump();
+    hal_device_dump();
 }

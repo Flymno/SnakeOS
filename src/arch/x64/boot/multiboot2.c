@@ -26,9 +26,9 @@ size_t callbackCount;
 * void multiboot2_init(uint32_t multiboot2InfoAddr)
 *	-Parses Multiboot2 info and calls registered callbacks
 */
-size_t multiboot2_verify(u32 multiboot2Magic) {
-	if (multiboot2Magic == MULTIBOOT2_MAGIC) { return 0;}
-	return 1;
+status_t multiboot2_verify(u32 multiboot2Magic) {
+	if (multiboot2Magic == MULTIBOOT2_MAGIC) { return SUCCESS;}
+	return FAILURE;
 }
 
 void multiboot2_register_callback(multiboot2_tag_callback_t cb) {
